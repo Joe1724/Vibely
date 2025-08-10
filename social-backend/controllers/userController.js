@@ -58,6 +58,17 @@ export const updateProfile = async (req, res) => {
     if (typeof req.body.firstName === 'string' && req.body.firstName.trim()) updates.firstName = req.body.firstName.trim();
     if (typeof req.body.middleName === 'string') updates.middleName = req.body.middleName.trim();
     if (typeof req.body.surname === 'string' && req.body.surname.trim()) updates.surname = req.body.surname.trim();
+
+    // Username change with uniqueness check
+    if (typeof req.body.username === 'string' && req.body.username.trim()) {
+      const newUsername = req.body.username.trim();
+      const taken = await User.findOne({ username: newUsername, _id: { $ne: userId } });
+      if (taken) {
+        return res.status(400).json({ message: 'Username already taken' });
+      }
+      updates.username = newUsername;
+    }
+
     if (req.file) updates.avatar = `/uploads/${req.file.filename}`;
     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true }).select('-passwordHash');
     res.json(user);

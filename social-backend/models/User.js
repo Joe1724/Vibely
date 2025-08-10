@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema(
     middleName: { type: String, trim: true, default: '' },
     surname: { type: String, required: true, trim: true },
     passwordHash: { type: String, required: true },
+    isVerified: { type: Boolean, default: true },
     bio: { type: String, default: '' },
     avatar: { type: String, default: '' },
     cover: { type: String, default: '' },
