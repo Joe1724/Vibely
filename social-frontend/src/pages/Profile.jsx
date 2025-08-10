@@ -7,6 +7,9 @@ export default function Profile() {
   const { user, logout, token } = useContext(AuthContext);
   const navigate = useNavigate();
   const [bio, setBio] = useState(user.bio || '');
+  const [firstName, setFirstName] = useState(user.firstName || '');
+  const [middleName, setMiddleName] = useState(user.middleName || '');
+  const [surname, setSurname] = useState(user.surname || '');
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -24,6 +27,9 @@ export default function Profile() {
     try {
       const formData = new FormData();
       formData.append('bio', bio);
+      formData.append('firstName', firstName);
+      formData.append('middleName', middleName);
+      formData.append('surname', surname);
       if (avatarFile) formData.append('avatar', avatarFile);
       const res = await axios.put('http://localhost:5000/api/users/me', formData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -111,6 +117,20 @@ export default function Profile() {
           <p><span className="font-bold">Email:</span> {user.email}</p>
           {isEditing ? (
             <form onSubmit={handleSave} className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block mb-1 text-sm">First name</label>
+                  <input className="w-full p-2 border rounded" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm">Middle name (optional)</label>
+                  <input className="w-full p-2 border rounded" value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block mb-1 text-sm">Surname</label>
+                  <input className="w-full p-2 border rounded" value={surname} onChange={(e) => setSurname(e.target.value)} required />
+                </div>
+              </div>
               <div>
                 <label className="block mb-1 text-sm">Bio</label>
                 <textarea className="w-full p-2 border rounded" value={bio} onChange={(e) => setBio(e.target.value)} />

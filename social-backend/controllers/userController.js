@@ -55,8 +55,11 @@ export const updateProfile = async (req, res) => {
     if (!userId) return res.status(401).json({ message: 'Not authenticated' });
     const updates = {};
     if (typeof req.body.bio === 'string') updates.bio = req.body.bio;
+    if (typeof req.body.firstName === 'string' && req.body.firstName.trim()) updates.firstName = req.body.firstName.trim();
+    if (typeof req.body.middleName === 'string') updates.middleName = req.body.middleName.trim();
+    if (typeof req.body.surname === 'string' && req.body.surname.trim()) updates.surname = req.body.surname.trim();
     if (req.file) updates.avatar = `/uploads/${req.file.filename}`;
-    const user = await User.findByIdAndUpdate(userId, updates, { new: true }).select('-passwordHash');
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true }).select('-passwordHash');
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
