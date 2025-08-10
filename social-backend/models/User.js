@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema(
     bio: { type: String, default: '' },
     avatar: { type: String, default: '' },
     cover: { type: String, default: '' },
+    lastActiveAt: { type: Date },
     followers: {
       type: [
         {
@@ -26,6 +27,15 @@ const UserSchema = new mongoose.Schema(
         {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'User',
+        },
+      ],
+      default: [],
+    },
+    bookmarks: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Post',
         },
       ],
       default: [],

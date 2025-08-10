@@ -6,7 +6,6 @@ import Register from './pages/Register.jsx';
 import Profile from './pages/Profile.jsx';
 import Posts from './pages/Posts.jsx';
 import UserProfile from './pages/UserProfile.jsx';
-import Messages from './pages/Messages.jsx';
 import ChatSidebar from './components/ChatSidebar.jsx';
 import VerifyOtp from './pages/VerifyOtp.jsx';
 import { AuthContext } from './context/AuthContext.jsx';
@@ -52,7 +51,7 @@ function App() {
     <>
       {/* App Header / Navbar */}
       <header className="sticky top-0 z-40 backdrop-blur bg-white/70 dark:bg-gray-900/70 border-b border-gray-200 dark:border-gray-800">
-        <div className="px-4 md:pr-[480px] py-3">
+        <div className={`px-4 ${user ? 'md:pr-[480px]' : ''} py-3`}>
           <div className="max-w-5xl mx-auto flex items-center gap-3">
           <div className="flex items-center gap-3">
             <span className="font-semibold text-lg">MiniSocial</span>
@@ -74,14 +73,7 @@ function App() {
                 >
                   Profile
                 </NavLink>
-                <NavLink
-                  to="/messages"
-                  className={({ isActive }) =>
-                    `px-3 py-1 rounded ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`
-                  }
-                >
-                  Messages
-                </NavLink>
+                
               </nav>
             )}
           </div>
@@ -178,8 +170,8 @@ function App() {
       </header>
 
       {/* Routes */}
-      <div className="px-4 py-6 md:pr-[480px]">
-      <main className="max-w-6xl mx-auto">
+      <div className={`px-4 py-6 ${user ? 'md:pr-[480px]' : ''}`}>
+      <main>
       <Routes>
       <Route
         path="/login"
@@ -205,10 +197,7 @@ function App() {
           path="/users/:id"
           element={user ? <UserProfile /> : <Navigate to="/login" />}
         />
-        <Route
-          path="/messages"
-          element={user ? <Messages /> : <Navigate to="/login" />}
-        />
+      
       {/* Catch-all route should be last */}
       <Route
         path="*"

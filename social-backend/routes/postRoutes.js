@@ -11,6 +11,11 @@ import {
   deleteComment,
   uploadMiddleware,
   searchPosts,
+  addReply,
+  deleteReply,
+  setReaction,
+  clearReaction,
+  addView,
 } from '../controllers/postController.js';
 
 const router = express.Router();
@@ -26,6 +31,11 @@ router.put('/like/:id', authMiddleware, likePost);
 router.put('/unlike/:id', authMiddleware, unlikePost);
 router.post('/comment/:id', authMiddleware, addComment);
 router.delete('/comment/:id/:commentId', authMiddleware, deleteComment);
+router.post('/reply/:id/:commentId', authMiddleware, addReply);
+router.delete('/reply/:id/:commentId/:replyId', authMiddleware, deleteReply);
+router.put('/reaction/:id', authMiddleware, setReaction);
+router.delete('/reaction/:id', authMiddleware, clearReaction);
+router.post('/view/:id', authMiddleware, addView);
 
 // Search
 router.get('/search', authMiddleware, searchPosts);

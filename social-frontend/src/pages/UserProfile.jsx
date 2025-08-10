@@ -9,6 +9,7 @@ export default function UserProfile() {
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [openReactionPostId, setOpenReactionPostId] = useState(null);
 
   const fetchAll = async () => {
     const [u, p] = await Promise.all([
@@ -49,6 +50,39 @@ export default function UserProfile() {
     await axios.post(`http://localhost:5000/api/posts/comment/${postId}`, { text }, { headers: { Authorization: `Bearer ${token}` } });
     fetchAll();
   };
+  const addReply = async (postId, commentId, text) => {
+    await axios.post(`http://localhost:5000/api/posts/reply/${postId}/${commentId}`, { text }, { headers: { Authorization: `Bearer ${token}` } });
+    fetchAll();
+  };
+  const addView = async (postId) => {
+    try {
+      await axios.post(`http://localhost:5000/api/posts/view/${postId}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    } catch {}
+  };
+  const toggleBookmark = async (postId) => {
+    await axios.put(`http://localhost:5000/api/users/me/bookmarks/${postId}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    fetchAll();
+  };
+  const setReaction = async (postId, type) => {
+    await axios.put(`http://localhost:5000/api/posts/reaction/${postId}`, { type }, { headers: { Authorization: `Bearer ${token}` } });
+    fetchAll();
+  };
+  const clearReaction = async (postId) => {
+    await axios.delete(`http://localhost:5000/api/posts/reaction/${postId}`, { headers: { Authorization: `Bearer ${token}` } });
+    fetchAll();
+  };
+  const getReactionCounts = (post) => {
+    const counts = { love: 0, haha: 0, wow: 0 };
+    (post.reactions || []).forEach((r) => {
+      if (counts[r.type] !== undefined) counts[r.type] += 1;
+    });
+    return counts;
+  };
+  const getMyReaction = (post) => {
+    const me = String(user._id);
+    const r = (post.reactions || []).find((x) => String(x.user) === me);
+    return r ? r.type : null;
+  };
 
   const openOrStartChat = async () => {
     try {
@@ -70,8 +104,8 @@ export default function UserProfile() {
   if (!profile) return <div className="p-4 text-gray-700 dark:text-gray-200">Loading...</div>;
 
   return (
-    <div className="px-4 py-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-[calc(100vh-64px)]">
-      <div className="mx-auto max-w-4xl">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 dark:from-gray-900 dark:to-gray-950">
+      <div className="mx-auto w-full max-w-5xl">
         {/* Profile header */}
         <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur shadow-xl ring-1 ring-black/5">
           <div className="relative">
@@ -127,28 +161,99 @@ export default function UserProfile() {
         {/* Posts */}
         <div className="mt-6 space-y-4">
           {posts.map((p) => (
-            <article key={p._id} className="overflow-hidden rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur shadow ring-1 ring-black/5">
+            <article key={p._id} onMouseEnter={() => addView(p._id)} className="overflow-hidden rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur shadow ring-1 ring-black/5">
               {p.image && <img src={`http://localhost:5000${p.image}`} alt="" className="w-full max-h-[420px] object-cover" />}
               <div className="p-4">
-                <p className="text-gray-800 dark:text-gray-200">{p.text}</p>
-                <div className="mt-3 flex items-center gap-4">
-                  {p.likes.includes(user._id) ? (
-                    <button onClick={() => unlike(p._id)} className="inline-flex items-center gap-1 text-red-500 hover:opacity-80">
-                      <span>❤️</span>
-                      <span className="text-sm font-medium">{p.likes.length}</span>
+                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{p.text}</p>
+                {Array.isArray(p.hashtags) && p.hashtags.length > 0 && (
+                  <div className="mt-1 text-xs text-blue-600 dark:text-blue-400 space-x-2">
+                    {p.hashtags.map((h) => (
+                      <span key={h}>#{h}</span>
+                    ))}
+                  </div>
+                )}
+                {p.video && <video src={`http://localhost:5000${p.video}`} controls className="w-full max-h-[420px] object-contain bg-black mt-2" />}
+                <div className="mt-3 flex items-center gap-3">
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setOpenReactionPostId(p._id)}
+                    onMouseLeave={() => setOpenReactionPostId((cur) => (cur === p._id ? null : cur))}
+                  >
+                    <button
+                      onClick={() => {
+                        const mine = getMyReaction(p);
+                        if (mine) clearReaction(p._id);
+                        else setReaction(p._id, 'love');
+                      }}
+                      className={`inline-flex items-center gap-1 ${getMyReaction(p) ? 'text-red-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                      <span>{getMyReaction(p) ? '❤️' : '🤍'}</span>
                     </button>
-                  ) : (
-                    <button onClick={() => like(p._id)} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                      <span>🤍</span>
-                      <span className="text-sm font-medium">{p.likes.length}</span>
-                    </button>
-                  )}
+                    {openReactionPostId === p._id && (
+                      <div className="absolute z-10 -top-10 left-0 flex items-center gap-2 rounded-full bg-white/95 dark:bg-gray-800/95 shadow px-2 py-1 ring-1 ring-black/5">
+                        <button className="hover:scale-110 transition" onClick={() => setReaction(p._id, 'love')}>❤️</button>
+                        <button className="hover:scale-110 transition" onClick={() => setReaction(p._id, 'haha')}>😂</button>
+                        <button className="hover:scale-110 transition" onClick={() => setReaction(p._id, 'wow')}>😮</button>
+                      </div>
+                    )}
+                  </div>
+                  {(() => {
+                    const c = getReactionCounts(p);
+                    const total = (c.love || 0) + (c.haha || 0) + (c.wow || 0);
+                    if (total === 0) return null;
+                    return (
+                      <div className="inline-flex items-center gap-2 text-xs text-gray-500">
+                        {c.love > 0 && (
+                          <span className="inline-flex items-center gap-1"><span>❤️</span><span>{c.love}</span></span>
+                        )}
+                        {c.haha > 0 && (
+                          <span className="inline-flex items-center gap-1"><span>😂</span><span>{c.haha}</span></span>
+                        )}
+                        {c.wow > 0 && (
+                          <span className="inline-flex items-center gap-1"><span>😮</span><span>{c.wow}</span></span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  <button onClick={() => toggleBookmark(p._id)} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <span>🔖</span>
+                  </button>
+                  <span className="ml-auto text-xs text-gray-500">{p.views || 0} views</span>
                 </div>
                 <div className="mt-3">
                   {p.comments.map((c) => (
-                    <p key={c._id} className="text-sm text-gray-600 dark:text-gray-400">
-                      <b>{c.user?.username || ''}:</b> {c.text}
-                    </p>
+                    <div key={c._id} className="mb-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <b>{c.user?.username || ''}:</b> {c.text}
+                      </p>
+                      {Array.isArray(c.replies) && c.replies.length > 0 && (
+                        <div className="mt-1 ml-4 space-y-1">
+                          {c.replies.map((r) => (
+                            <p key={r._id} className="text-xs text-gray-500 dark:text-gray-400">
+                              <b>{r.user?.username}:</b> {r.text}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const text = e.target[`reply-${c._id}`].value;
+                          addReply(p._id, c._id, text);
+                          e.target[`reply-${c._id}`].value = '';
+                        }}
+                        className="flex items-center gap-2 mt-1 ml-4"
+                      >
+                        <input
+                          name={`reply-${c._id}`}
+                          className="flex-1 px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Reply..."
+                        />
+                        <button type="submit" className="px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                          Reply
+                        </button>
+                      </form>
+                    </div>
                   ))}
                   <form
                     onSubmit={(e) => {

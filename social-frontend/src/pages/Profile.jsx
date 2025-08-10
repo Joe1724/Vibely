@@ -18,6 +18,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [posts, setPosts] = useState([]);
   const [saveError, setSaveError] = useState('');
+  const [openReactionPostId, setOpenReactionPostId] = useState(null);
 
   const handleLogout = () => {
     logout();
@@ -105,9 +106,30 @@ export default function Profile() {
     fetchUserPosts();
   };
 
+  const setReaction = async (postId, type) => {
+    await axios.put(`http://localhost:5000/api/posts/reaction/${postId}`, { type }, { headers: { Authorization: `Bearer ${token}` } });
+    fetchUserPosts();
+  };
+  const clearReaction = async (postId) => {
+    await axios.delete(`http://localhost:5000/api/posts/reaction/${postId}`, { headers: { Authorization: `Bearer ${token}` } });
+    fetchUserPosts();
+  };
+  const getReactionCounts = (post) => {
+    const counts = { love: 0, haha: 0, wow: 0 };
+    (post.reactions || []).forEach((r) => {
+      if (counts[r.type] !== undefined) counts[r.type] += 1;
+    });
+    return counts;
+  };
+  const getMyReaction = (post) => {
+    const me = String(user._id || user.id);
+    const r = (post.reactions || []).find((x) => String(x.user) === me);
+    return r ? r.type : null;
+  };
+
   return (
-    <div className="w-full min-h-[calc(100vh-64px)] bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 px-4 py-8">
-      <div className="w-full max-w-6xl mx-auto space-y-6">
+    <div className="w-full min-h-[calc(100vh-64px)] bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 dark:from-gray-900 dark:to-gray-950">
+      <div className="w-full max-w-5xl mx-auto space-y-6">
         {/* Profile hero */}
         <section className="relative overflow-hidden shadow-xl rounded-2xl bg-white/90 dark:bg-gray-800/80 backdrop-blur ring-1 ring-black/5">
           <div className="relative">
@@ -263,20 +285,60 @@ export default function Profile() {
                 {p.image && (
                   <img src={`http://localhost:5000${p.image}`} alt="" className="w-full max-h-[420px] object-cover" />
                 )}
+                {p.video && (
+                  <video src={`http://localhost:5000${p.video}`} controls className="w-full max-h-[420px] object-contain bg-black" />
+                )}
                 <div className="p-4">
-                  <p className="text-gray-800 dark:text-gray-200">{p.text}</p>
-                  <div className="flex items-center gap-4 mt-3">
-                    {p.likes.includes(user._id) ? (
-                      <button onClick={() => handleUnlike(p._id)} className="inline-flex items-center gap-1 text-red-500 hover:opacity-80">
-                        <span>❤️</span>
-                        <span className="text-sm font-medium">{p.likes.length}</span>
+                  <p className="text-gray-800 whitespace-pre-wrap dark:text-gray-200">{p.text}</p>
+                  {Array.isArray(p.hashtags) && p.hashtags.length > 0 && (
+                    <div className="mt-1 space-x-2 text-xs text-blue-600 dark:text-blue-400">
+                      {p.hashtags.map((h) => (
+                        <span key={h}>#{h}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 mt-3">
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setOpenReactionPostId(p._id)}
+                      onMouseLeave={() => setOpenReactionPostId((cur) => (cur === p._id ? null : cur))}
+                    >
+                      <button
+                        onClick={() => {
+                          const mine = getMyReaction(p);
+                          if (mine) clearReaction(p._id);
+                          else setReaction(p._id, 'love');
+                        }}
+                        className={`inline-flex items-center gap-1 ${getMyReaction(p) ? 'text-red-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                      >
+                        <span>{getMyReaction(p) ? '❤️' : '🤍'}</span>
                       </button>
-                    ) : (
-                      <button onClick={() => handleLike(p._id)} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                        <span>🤍</span>
-                        <span className="text-sm font-medium">{p.likes.length}</span>
-                      </button>
-                    )}
+                      {openReactionPostId === p._id && (
+                        <div className="absolute left-0 z-10 flex items-center gap-2 px-2 py-1 rounded-full shadow -top-10 bg-white/95 dark:bg-gray-800/95 ring-1 ring-black/5">
+                          <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'love')}>❤️</button>
+                          <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'haha')}>😂</button>
+                          <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'wow')}>😮</button>
+                        </div>
+                      )}
+                    </div>
+                    {(() => {
+                      const c = getReactionCounts(p);
+                      const total = (c.love || 0) + (c.haha || 0) + (c.wow || 0);
+                      if (total === 0) return null;
+                      return (
+                        <div className="inline-flex items-center gap-2 text-xs text-gray-500">
+                          {c.love > 0 && (
+                            <span className="inline-flex items-center gap-1"><span>❤️</span><span>{c.love}</span></span>
+                          )}
+                          {c.haha > 0 && (
+                            <span className="inline-flex items-center gap-1"><span>😂</span><span>{c.haha}</span></span>
+                          )}
+                          {c.wow > 0 && (
+                            <span className="inline-flex items-center gap-1"><span>😮</span><span>{c.wow}</span></span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="mt-3">
                     {p.comments.map((c) => (

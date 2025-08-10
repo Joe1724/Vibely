@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Post from '../models/Post.js';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import path from 'path';
@@ -149,6 +150,65 @@ export const unfollowUser = async (req, res) => {
   } catch (err) {
     if (err?.name === 'CastError') return res.status(400).json({ message: 'Invalid user id' });
     console.error('unfollowUser error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+// Toggle bookmark
+export const toggleBookmark = async (req, res) => {
+  try {
+    const userId = String(req.user?._id || req.user?.id || '');
+    const postId = String(req.params.postId || '');
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+    if (!postId) return res.status(400).json({ message: 'Invalid post id' });
+    const post = await Post.findById(postId).select('_id');
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    const me = await User.findById(userId).select('bookmarks');
+    const has = me.bookmarks.some((p) => String(p) === String(postId));
+    if (has) {
+      await User.updateOne({ _id: userId }, { $pull: { bookmarks: postId } });
+    } else {
+      await User.updateOne({ _id: userId }, { $addToSet: { bookmarks: postId } });
+    }
+    const updated = await User.findById(userId).select('bookmarks');
+    res.json(updated.bookmarks);
+  } catch (err) {
+    console.error('toggleBookmark error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get my bookmarks
+export const getBookmarks = async (req, res) => {
+  try {
+    const userId = String(req.user?._id || req.user?.id || '');
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+    const me = await User.findById(userId)
+      .select('bookmarks')
+      .populate({
+        path: 'bookmarks',
+        populate: [
+          { path: 'user', select: 'username avatar' },
+          { path: 'comments.user', select: 'username avatar' },
+          { path: 'comments.replies.user', select: 'username avatar' },
+        ],
+      });
+    res.json(me.bookmarks || []);
+  } catch (err) {
+    console.error('getBookmarks error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Presence heartbeat: update lastActiveAt
+export const heartbeat = async (req, res) => {
+  try {
+    const userId = String(req.user?._id || req.user?.id || '');
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+    await User.updateOne({ _id: userId }, { $set: { lastActiveAt: new Date() } });
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import User from '../models/User.js';
 
 // Ensure uploads dir exists (cross-platform)
 const __filename = fileURLToPath(import.meta.url);
@@ -25,33 +26,43 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-  const ext = path.extname(file.originalname || '').toLowerCase();
-  if (file.mimetype?.startsWith('image/') || allowed.includes(ext)) {
-    return cb(null, true);
-  }
-  cb(Object.assign(new Error('Only image uploads are allowed'), { status: 400 }));
+  const imageExt = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+  const videoExt = ['.mp4', '.webm', '.ogg', '.mov'];
+  const ext = (path.extname(file.originalname || '').toLowerCase()) || '';
+  const isImage = file.mimetype?.startsWith('image/') || imageExt.includes(ext);
+  const isVideo = file.mimetype?.startsWith('video/') || videoExt.includes(ext);
+  if (isImage || isVideo) return cb(null, true);
+  cb(Object.assign(new Error('Only image/video uploads are allowed'), { status: 400 }));
 };
 
 export const uploadMiddleware = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-}).single('image');
+  limits: { fileSize: 20 * 1024 * 1024 },
+}).single('media');
 
 // Create post
 export const createPost = async (req, res) => {
   try {
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image || "";
+    const mediaUrl = req.file ? `/uploads/${req.file.filename}` : (req.body.media || req.body.image || "");
     const authenticatedUserId = req.user?._id || req.user?.id;
     if (!authenticatedUserId) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
+    // Extract hashtags and mentions
+    const text = String(req.body.text || '').trim();
+    const hashtags = Array.from(new Set((text.match(/#([\w-]{1,50})/g) || []).map((t) => t.slice(1).toLowerCase())));
+    const usernames = Array.from(new Set((text.match(/@([a-zA-Z0-9_\.\-]{2,30})/g) || []).map((t) => t.slice(1))));
+    const mentionedUsers = usernames.length > 0 ? await User.find({ username: { $in: usernames } }).select('_id') : [];
+
     const newPost = new Post({
       user: authenticatedUserId,
-      text: req.body.text,
-      image: imageUrl,
+      text,
+      image: req.file && req.file.mimetype?.startsWith('image/') ? mediaUrl : undefined,
+      video: req.file && req.file.mimetype?.startsWith('video/') ? mediaUrl : undefined,
+      hashtags,
+      mentions: mentionedUsers.map((u) => u._id),
     });
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
@@ -74,13 +85,17 @@ export const getPosts = async (req, res) => {
 
     if (!usePagination) {
       const posts = await Post.find(filter)
-        .populate("user", "username email")
+        .populate("user", "username email avatar")
+        .populate("comments.user", "username avatar")
+        .populate("comments.replies.user", "username avatar")
         .sort({ createdAt: -1 });
       return res.json(posts);
     }
 
     const posts = await Post.find(filter)
-      .populate("user", "username email")
+      .populate("user", "username email avatar")
+      .populate("comments.user", "username avatar")
+      .populate("comments.replies.user", "username avatar")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit + 1);
@@ -104,8 +119,17 @@ export const updatePost = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    post.text = req.body.text || post.text;
-    post.image = req.body.image || post.image;
+    const text = typeof req.body.text === 'string' ? req.body.text : post.text;
+    post.text = text;
+    if (typeof req.body.image === 'string') post.image = req.body.image;
+    if (typeof req.body.video === 'string') post.video = req.body.video;
+    post.editedAt = new Date();
+    // Recompute hashtags and mentions
+    const hashtags = Array.from(new Set((text.match(/#([\w-]{1,50})/g) || []).map((t) => t.slice(1).toLowerCase())));
+    const usernames = Array.from(new Set((text.match(/@([a-zA-Z0-9_\.\-]{2,30})/g) || []).map((t) => t.slice(1))));
+    const mentionedUsers = usernames.length > 0 ? await User.find({ username: { $in: usernames } }).select('_id') : [];
+    post.hashtags = hashtags;
+    post.mentions = mentionedUsers.map((u) => u._id);
 
     const updatedPost = await post.save();
     res.json(updatedPost);
@@ -133,7 +157,7 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// Like post
+// Like post (legacy)
 export const likePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -176,14 +200,24 @@ export const addComment = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
+    const text = String(req.body.text || '').trim();
+    if (!text) return res.status(400).json({ message: 'Text is required' });
+    const usernames = Array.from(new Set((text.match(/@([a-zA-Z0-9_\.\-]{2,30})/g) || []).map((t) => t.slice(1))));
+    const mentionedUsers = usernames.length > 0 ? await User.find({ username: { $in: usernames } }).select('_id') : [];
     const comment = {
       user: req.user.id,
-      text: req.body.text,
+      text,
+      mentions: mentionedUsers.map((u) => u._id),
+      createdAt: new Date(),
     };
 
     post.comments.unshift(comment);
     await post.save();
-    res.json(post.comments);
+    const populated = await Post.findById(req.params.id)
+      .populate('comments.user', 'username avatar')
+      .populate('comments.replies.user', 'username avatar')
+      .select('comments');
+    res.json(populated.comments);
   } catch (error) {
     console.error('addComment error:', error);
     res.status(500).json({ message: "Server error" });
@@ -213,10 +247,123 @@ export const deleteComment = async (req, res) => {
     );
 
     await post.save();
-    res.json(post.comments);
+    const populated = await Post.findById(req.params.id)
+      .populate('comments.user', 'username avatar')
+      .populate('comments.replies.user', 'username avatar')
+      .select('comments');
+    res.json(populated.comments);
   } catch (error) {
     console.error('deleteComment error:', error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Add reply
+export const addReply = async (req, res) => {
+  try {
+    const { id: postId, commentId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    const text = String(req.body.text || '').trim();
+    if (!text) return res.status(400).json({ message: 'Text is required' });
+    const usernames = Array.from(new Set((text.match(/@([a-zA-Z0-9_\.\-]{2,30})/g) || []).map((t) => t.slice(1))));
+    const mentionedUsers = usernames.length > 0 ? await User.find({ username: { $in: usernames } }).select('_id') : [];
+    comment.replies.push({ user: req.user.id, text, mentions: mentionedUsers.map((u) => u._id), createdAt: new Date() });
+    await post.save();
+    const populated = await Post.findById(postId)
+      .populate('comments.user', 'username avatar')
+      .populate('comments.replies.user', 'username avatar')
+      .select('comments');
+    res.json(populated.comments);
+  } catch (error) {
+    console.error('addReply error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Remove reply
+export const deleteReply = async (req, res) => {
+  try {
+    const { id: postId, commentId, replyId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+    const reply = comment.replies.id(replyId);
+    if (!reply) return res.status(404).json({ message: 'Reply not found' });
+    if (String(reply.user) !== String(req.user.id)) return res.status(401).json({ message: 'Not authorized' });
+    reply.deleteOne();
+    await post.save();
+    const populated = await Post.findById(postId)
+      .populate('comments.user', 'username avatar')
+      .populate('comments.replies.user', 'username avatar')
+      .select('comments');
+    res.json(populated.comments);
+  } catch (error) {
+    console.error('deleteReply error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Set or change reaction
+export const setReaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type } = req.body;
+    const allowed = ['love', 'haha', 'wow'];
+    if (!allowed.includes(type)) return res.status(400).json({ message: 'Invalid reaction' });
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    // remove any existing reaction by this user
+    post.reactions = post.reactions.filter((r) => String(r.user) !== String(req.user.id));
+    post.reactions.push({ user: req.user.id, type });
+    // keep legacy likes in sync only for love
+    post.likes = post.likes.filter((u) => String(u) !== String(req.user.id));
+    if (type === 'love') post.likes.push(req.user.id);
+    await post.save();
+    res.json(post.reactions);
+  } catch (error) {
+    console.error('setReaction error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Clear reaction
+export const clearReaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    post.reactions = post.reactions.filter((r) => String(r.user) !== String(req.user.id));
+    post.likes = post.likes.filter((u) => String(u) !== String(req.user.id));
+    await post.save();
+    res.json(post.reactions);
+  } catch (error) {
+    console.error('clearReaction error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Increment views
+export const addView = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = String(req.user?._id || req.user?.id || '');
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    const already = post.viewedBy.some((v) => String(v) === userId);
+    if (!already) {
+      post.views = (post.views || 0) + 1;
+      post.viewedBy.push(userId);
+      await post.save();
+    }
+    res.json({ views: post.views });
+  } catch (error) {
+    console.error('addView error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -225,9 +372,14 @@ export const searchPosts = async (req, res) => {
   try {
     const query = (req.query.query || '').trim();
     if (!query) return res.json([]);
-    const regex = new RegExp(query, 'i');
-    const posts = await Post.find({ text: regex })
-      .populate('user', 'username email')
+    const hashtagMatch = query.startsWith('#') ? query.slice(1).toLowerCase() : null;
+    const criteria = hashtagMatch
+      ? { hashtags: hashtagMatch }
+      : { text: new RegExp(query, 'i') };
+    const posts = await Post.find(criteria)
+      .populate('user', 'username email avatar')
+      .populate('comments.user', 'username avatar')
+      .populate('comments.replies.user', 'username avatar')
       .sort({ createdAt: -1 })
       .limit(50);
     res.json(posts);

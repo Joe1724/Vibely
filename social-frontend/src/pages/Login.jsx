@@ -24,15 +24,15 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center w-screen min-h-screen px-4 bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-        <h2 className="mb-6 text-3xl font-semibold text-center text-gray-800 dark:text-gray-100">Login</h2>
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 dark:from-gray-900 dark:to-gray-950">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white/90 p-8 shadow-xl ring-1 ring-black/5 backdrop-blur dark:bg-gray-800/80">
+        <h2 className="mb-6 text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">Login</h2>
 
         {error && (
           <p className="p-2 mb-4 text-sm text-red-600 bg-red-100 rounded">{error}</p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
             name="email"
@@ -40,7 +40,7 @@ export default function Login() {
             onChange={handleChange}
             value={form.email}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:placeholder-gray-400 dark:text-white"
           />
 
           <input
@@ -50,12 +50,12 @@ export default function Login() {
             onChange={handleChange}
             value={form.password}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:placeholder-gray-400 dark:text-white"
           />
 
           <button
             type="submit"
-            className="w-full py-3 font-semibold text-white transition bg-blue-600 rounded-md hover:bg-blue-700"
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white shadow hover:bg-blue-700"
           >
             Login
           </button>
