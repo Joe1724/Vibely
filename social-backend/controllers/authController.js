@@ -6,7 +6,7 @@ import { sendMail } from '../utils/mailer.js';
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password, firstName, middleName = '', surname } = req.body;
+    const { username, email, password, confirmPassword, firstName, middleName = '', surname } = req.body;
 
     if (!firstName || !surname) {
       return res.status(400).json({ message: 'firstName and surname are required' });
@@ -18,6 +18,9 @@ export const register = async (req, res) => {
     const existingUsername = await User.findOne({ username });
     if (existingUsername) return res.status(400).json({ message: 'Username already taken' });
 
+    if (confirmPassword !== undefined && password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
@@ -47,9 +50,12 @@ export const register = async (req, res) => {
 
 export const registerInit = async (req, res) => {
   try {
-    const { username, email, password, firstName, middleName = '', surname } = req.body;
+    const { username, email, password, confirmPassword, firstName, middleName = '', surname } = req.body;
     if (!username || !email || !password || !firstName || !surname) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+    if (confirmPassword !== undefined && password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
     }
 
     const existingEmail = await User.findOne({ email });
@@ -103,7 +109,10 @@ export const registerInit = async (req, res) => {
       html: `<p>Your verification code is <b>${code}</b>. It expires in ${ttlMinutes} minutes.</p>`,
     });
 
-    res.json({ ok: true });
+    const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+    const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    // In development without SMTP, return the code to the client for testing
+    res.json({ ok: true, devCode: !isProd && !smtpConfigured ? code : undefined });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -202,7 +211,9 @@ export const registerResend = async (req, res) => {
       html: `<p>Your verification code is <b>${newCode}</b>. It expires in ${ttlMinutes} minutes.</p>`,
     });
 
-    res.json({ ok: true });
+    const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+    const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    res.json({ ok: true, devCode: !isProd && !smtpConfigured ? newCode : undefined });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

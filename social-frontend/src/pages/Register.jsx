@@ -5,22 +5,40 @@ import { useNavigate, Link } from 'react-router-dom'; // added Link
 import { AuthContext } from '../context/AuthContext.jsx';
 
 export default function Register() {
-  const [form, setForm] = useState({ username: '', email: '', password: '', firstName: '', middleName: '', surname: '' });
+  const [form, setForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    middleName: '',
+    surname: ''
+  });
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
+      if (!form.password || !form.confirmPassword || form.password !== form.confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
       const payload = { ...form };
       if (!payload.middleName) delete payload.middleName; // optional
-      const res = await axios.post('http://localhost:5000/api/auth/register', payload);
-      login(res.data.token, res.data.user);
-      navigate('/profile');
+      // Do not send confirmPassword to backend unnecessarily
+      const { confirmPassword, ...toSend } = payload;
+      const res = await axios.post('http://localhost:5000/api/auth/register/init', toSend);
+      if (res?.data?.devCode) {
+        try {
+          sessionStorage.setItem(`otp_dev_${form.email}`, String(res.data.devCode));
+        } catch {}
+      }
+      navigate(`/verify-otp?email=${encodeURIComponent(form.email)}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     }
@@ -29,10 +47,14 @@ export default function Register() {
   return (
     <div className="flex items-center justify-center w-screen min-h-screen px-4 bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-        <h2 className="mb-6 text-3xl font-semibold text-center text-gray-800 dark:text-gray-100">Register</h2>
+        <h2 className="mb-6 text-3xl font-semibold text-center text-gray-800 dark:text-gray-100">
+          Register
+        </h2>
 
         {error && (
-          <p className="p-2 mb-4 text-sm text-red-600 bg-red-100 rounded">{error}</p>
+          <p className="p-2 mb-4 text-sm text-red-600 bg-red-100 rounded">
+            {error}
+          </p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -82,6 +104,15 @@ export default function Register() {
             placeholder="Password"
             onChange={handleChange}
             value={form.password}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm password"
+            onChange={handleChange}
+            value={form.confirmPassword}
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
           />

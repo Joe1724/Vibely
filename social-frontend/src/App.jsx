@@ -8,6 +8,7 @@ import Posts from './pages/Posts.jsx';
 import UserProfile from './pages/UserProfile.jsx';
 import Messages from './pages/Messages.jsx';
 import ChatSidebar from './components/ChatSidebar.jsx';
+import VerifyOtp from './pages/VerifyOtp.jsx';
 import { AuthContext } from './context/AuthContext.jsx';
 import { ThemeContext } from './context/ThemeContext.jsx';
 
@@ -51,7 +52,8 @@ function App() {
     <>
       {/* App Header / Navbar */}
       <header className="sticky top-0 z-40 backdrop-blur bg-white/70 dark:bg-gray-900/70 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-5xl mx-auto px-4 md:pr-[520px] py-3 flex items-center gap-3">
+        <div className="px-4 md:pr-[480px] py-3">
+          <div className="max-w-5xl mx-auto flex items-center gap-3">
           <div className="flex items-center gap-3">
             <span className="font-semibold text-lg">MiniSocial</span>
             {user && (
@@ -171,11 +173,13 @@ function App() {
               </>
             )}
           </div>
+          </div>
         </div>
       </header>
 
       {/* Routes */}
-      <main className="max-w-6xl px-4 py-6 mx-auto md:pr-[520px]">
+      <div className="px-4 py-6 md:pr-[480px]">
+      <main className="max-w-6xl mx-auto">
       <Routes>
       <Route
         path="/login"
@@ -184,6 +188,10 @@ function App() {
       <Route
         path="/register"
         element={!user ? <Register /> : <Navigate to="/profile" />}
+      />
+      <Route
+        path="/verify-otp"
+        element={!user ? <VerifyOtp /> : <Navigate to="/profile" />}
       />
       <Route
         path="/profile"
@@ -208,6 +216,7 @@ function App() {
       />
       </Routes>
       </main>
+      </div>
       {user && <ChatSidebar />}
     </>
   );

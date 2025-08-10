@@ -116,7 +116,7 @@ export default function ChatSidebar() {
   };
 
   return (
-    <aside className={`fixed right-4 top-[80px] bottom-4 w-[460px] hidden md:flex z-30`}> 
+    <aside className={`fixed right-0 md:right-4 top-[80px] bottom-4 w-full md:w-[460px] hidden md:flex z-30`}> 
       <div className="flex flex-col h-full bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-200">Messages</h3>

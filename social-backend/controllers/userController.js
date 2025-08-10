@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -109,35 +110,45 @@ export const getUserById = async (req, res) => {
 
 export const followUser = async (req, res) => {
   try {
-    const me = req.user?._id || req.user?.id;
-    const targetId = req.params.id;
-    if (me === targetId) return res.status(400).json({ message: 'Cannot follow yourself' });
-    const meDoc = await User.findById(me);
-    const target = await User.findById(targetId);
+    const meId = String(req.user?._id || req.user?.id || '');
+    const targetId = String(req.params.id || '');
+    if (!meId) return res.status(401).json({ message: 'Not authenticated' });
+    if (!targetId) return res.status(400).json({ message: 'Invalid target' });
+    if (!mongoose.Types.ObjectId.isValid(meId) || !mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({ message: 'Invalid user id' });
+    }
+    if (meId === targetId) return res.status(400).json({ message: 'Cannot follow yourself' });
+    const target = await User.findById(targetId).select('_id');
     if (!target) return res.status(404).json({ message: 'User not found' });
-    if (!meDoc.following.includes(target._id)) meDoc.following.push(target._id);
-    if (!target.followers.includes(meDoc._id)) target.followers.push(meDoc._id);
-    await meDoc.save();
-    await target.save();
+    const upd1 = await User.updateOne({ _id: meId }, { $addToSet: { following: target._id } });
+    if (upd1.matchedCount === 0) return res.status(401).json({ message: 'Not authenticated' });
+    await User.updateOne({ _id: target._id }, { $addToSet: { followers: meId } });
     res.json({ ok: true });
   } catch (err) {
+    if (err?.name === 'CastError') return res.status(400).json({ message: 'Invalid user id' });
+    console.error('followUser error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 export const unfollowUser = async (req, res) => {
   try {
-    const me = req.user?._id || req.user?.id;
-    const targetId = req.params.id;
-    const meDoc = await User.findById(me);
-    const target = await User.findById(targetId);
+    const meId = String(req.user?._id || req.user?.id || '');
+    const targetId = String(req.params.id || '');
+    if (!meId) return res.status(401).json({ message: 'Not authenticated' });
+    if (!targetId) return res.status(400).json({ message: 'Invalid target' });
+    if (!mongoose.Types.ObjectId.isValid(meId) || !mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({ message: 'Invalid user id' });
+    }
+    const target = await User.findById(targetId).select('_id');
     if (!target) return res.status(404).json({ message: 'User not found' });
-    meDoc.following = meDoc.following.filter((id) => id.toString() !== targetId);
-    target.followers = target.followers.filter((id) => id.toString() !== me);
-    await meDoc.save();
-    await target.save();
+    const upd1 = await User.updateOne({ _id: meId }, { $pull: { following: target._id } });
+    if (upd1.matchedCount === 0) return res.status(401).json({ message: 'Not authenticated' });
+    await User.updateOne({ _id: target._id }, { $pull: { followers: meId } });
     res.json({ ok: true });
   } catch (err) {
+    if (err?.name === 'CastError') return res.status(400).json({ message: 'Invalid user id' });
+    console.error('unfollowUser error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

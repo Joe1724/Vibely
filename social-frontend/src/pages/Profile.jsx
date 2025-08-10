@@ -6,15 +6,18 @@ import axios from 'axios';
 export default function Profile() {
   const { user, logout, token } = useContext(AuthContext);
   const navigate = useNavigate();
+
   const [bio, setBio] = useState(user.bio || '');
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [middleName, setMiddleName] = useState(user.middleName || '');
   const [surname, setSurname] = useState(user.surname || '');
+  const [username, setUsername] = useState(user.username || '');
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [saveError, setSaveError] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -23,6 +26,7 @@ export default function Profile() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setSaveError('');
     setSaving(true);
     try {
       const formData = new FormData();
@@ -30,21 +34,29 @@ export default function Profile() {
       formData.append('firstName', firstName);
       formData.append('middleName', middleName);
       formData.append('surname', surname);
+      formData.append('username', username);
       if (avatarFile) formData.append('avatar', avatarFile);
-      const res = await axios.put('http://localhost:5000/api/users/me', formData, {
+
+      await axios.put('http://localhost:5000/api/users/me', formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // naive local update
+
+      // Upload cover separately if present
       if (coverFile) {
-        const coverData = new FormData();
-        coverData.append('cover', coverFile);
-        await axios.put('http://localhost:5000/api/users/me/cover', coverData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        try {
+          const coverData = new FormData();
+          coverData.append('cover', coverFile);
+          await axios.put('http://localhost:5000/api/users/me/cover', coverData, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (coverErr) {
+          setSaveError(coverErr.response?.data?.message || 'Failed to update cover photo');
+        }
       }
-      window.location.reload();
+
+      if (!saveError) window.location.reload();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update profile');
+      setSaveError(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -94,120 +106,211 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex items-center justify-center w-full min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-        <div className="mb-4 -mx-8 -mt-8">
-          {user.cover ? (
-            <img src={`http://localhost:5000${user.cover}`} alt="cover" className="object-cover w-full h-40 rounded-t-lg" />
-          ) : (
-            <div className="w-full h-40 bg-gray-200 rounded-t-lg dark:bg-gray-700" />
-          )}
-        </div>
-        <h2 className="mb-2 text-3xl font-semibold text-center text-gray-800 dark:text-gray-100">Profile</h2>
-        <p className="mb-4 text-sm text-center text-gray-600 dark:text-gray-300">
-          {Array.isArray(user.followers) ? user.followers.length : 0} followers · {Array.isArray(user.following) ? user.following.length : 0} following
-        </p>
+    <div className="w-full min-h-[calc(100vh-64px)] bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 px-4 py-8">
+      <div className="w-full max-w-6xl mx-auto space-y-6">
+        {/* Profile hero */}
+        <section className="relative overflow-hidden shadow-xl rounded-2xl bg-white/90 dark:bg-gray-800/80 backdrop-blur ring-1 ring-black/5">
+          <div className="relative">
+            <div className="w-full h-44 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-indigo-600 dark:to-blue-500">
+              {user.cover && (
+                <img src={`http://localhost:5000${user.cover}`} alt="cover" className="object-cover w-full h-44" />
+              )}
+            </div>
+            {user.avatar && (
+              <img
+                src={`http://localhost:5000${user.avatar}`}
+                alt="avatar"
+                className="absolute object-cover w-24 h-24 -translate-x-1/2 rounded-full left-1/2 -bottom-12 ring-4 ring-white dark:ring-gray-800"
+              />
+            )}
+          </div>
+          <div className="px-6 pt-16 pb-6 text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              {[user.firstName, user.middleName, user.surname].filter(Boolean).join(' ') || user.username || 'Profile'}
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{user.username ? `@${user.username}` : ''}</p>
 
-        <div className="space-y-4 text-gray-700 dark:text-gray-300">
-          {user.avatar && (
-            <img src={`http://localhost:5000${user.avatar}`} alt="avatar" className="w-24 h-24 mx-auto rounded-full" />
-          )}
-          <p><span className="font-bold">Name:</span> {[user.firstName, user.middleName, user.surname].filter(Boolean).join(' ') || '—'}</p>
-          <p><span className="font-bold">Username:</span> {user.username ? `@${user.username}` : '—'}</p>
-          <p><span className="font-bold">Email:</span> {user.email}</p>
-          {isEditing ? (
-            <form onSubmit={handleSave} className="space-y-3">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block mb-1 text-sm">First name</label>
-                  <input className="w-full p-2 border rounded" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm">Middle name (optional)</label>
-                  <input className="w-full p-2 border rounded" value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block mb-1 text-sm">Surname</label>
-                  <input className="w-full p-2 border rounded" value={surname} onChange={(e) => setSurname(e.target.value)} required />
-                </div>
-              </div>
-              <div>
-                <label className="block mb-1 text-sm">Bio</label>
-                <textarea className="w-full p-2 border rounded" value={bio} onChange={(e) => setBio(e.target.value)} />
-              </div>
-              <div>
-                <label className="block mb-1 text-sm">Avatar</label>
-                <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
-              </div>
-              <div>
-                <label className="block mb-1 text-sm">Cover Photo</label>
-                <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
-              </div>
-              <div className="flex gap-2">
-                <button disabled={saving} className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-200 rounded dark:bg-gray-700">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <button onClick={() => setIsEditing(true)} className="px-4 py-2 text-white bg-blue-600 rounded">
-              Edit Profile
-            </button>
-          )}
-        </div>
+            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-600 dark:text-gray-300">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-700">
+                <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                {Array.isArray(user.followers) ? user.followers.length : 0} followers
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                {Array.isArray(user.following) ? user.following.length : 0} following
+              </span>
+            </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-full py-3 mt-8 font-semibold text-white transition bg-red-600 rounded-md hover:bg-red-700"
-        >
-          Logout
-        </button>
-        </div>
+            <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+              <p className="flex items-center justify-center gap-2"><span className="font-semibold">Email:</span> {user.email}</p>
+              <p className="mt-1 text-gray-700 dark:text-gray-300"><span className="font-semibold">Bio:</span> {user.bio || '—'}</p>
+            </div>
 
-        <div className="mt-10">
-          <h3 className="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-100">Your Posts</h3>
+            <div className="mt-6">
+              {isEditing ? (
+                <form onSubmit={handleSave} className="max-w-2xl mx-auto space-y-4 text-left">
+                  {saveError && (
+                    <p className="p-2 text-sm text-red-600 bg-red-100 rounded-md">{saveError}</p>
+                  )}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">First name</label>
+                      <input
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Middle name (optional)</label>
+                      <input
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        value={middleName}
+                        onChange={(e) => setMiddleName(e.target.value)}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Surname</label>
+                      <input
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        value={surname}
+                        onChange={(e) => setSurname(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Username</label>
+                      <input
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Shown as @username</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Bio</label>
+                    <textarea
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Avatar</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                        className="w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white hover:file:bg-blue-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Cover photo</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+                        className="w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-center gap-2">
+                    <button
+                      disabled={saving}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 disabled:opacity-60"
+                    >
+                      {saving ? 'Saving...' : 'Save changes'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow hover:bg-red-700"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Posts */}
+        <section>
+          <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">Your Posts</h3>
           <div className="space-y-4">
             {posts.map((p) => (
-              <div key={p._id} className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+              <article key={p._id} className="overflow-hidden shadow rounded-2xl bg-white/90 backdrop-blur ring-1 ring-black/5 dark:bg-gray-800/80">
                 {p.image && (
-                  <img src={`http://localhost:5000${p.image}`} alt="" className="mb-2 rounded" />
+                  <img src={`http://localhost:5000${p.image}`} alt="" className="w-full max-h-[420px] object-cover" />
                 )}
-                <p className="text-gray-800 dark:text-gray-200">{p.text}</p>
-                <div className="flex items-center gap-4 mt-3">
-                  {p.likes.includes(user._id) ? (
-                    <button onClick={() => handleUnlike(p._id)} className="text-red-500">❤️ {p.likes.length}</button>
-                  ) : (
-                    <button onClick={() => handleLike(p._id)} className="text-gray-500">🤍 {p.likes.length}</button>
-                  )}
+                <div className="p-4">
+                  <p className="text-gray-800 dark:text-gray-200">{p.text}</p>
+                  <div className="flex items-center gap-4 mt-3">
+                    {p.likes.includes(user._id) ? (
+                      <button onClick={() => handleUnlike(p._id)} className="inline-flex items-center gap-1 text-red-500 hover:opacity-80">
+                        <span>❤️</span>
+                        <span className="text-sm font-medium">{p.likes.length}</span>
+                      </button>
+                    ) : (
+                      <button onClick={() => handleLike(p._id)} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                        <span>🤍</span>
+                        <span className="text-sm font-medium">{p.likes.length}</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    {p.comments.map((c) => (
+                      <p key={c._id} className="text-sm text-gray-600 dark:text-gray-400">
+                        <b>{c.user?.username || ''}:</b> {c.text}
+                      </p>
+                    ))}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleComment(p._id, e.target.comment.value);
+                        e.target.comment.value = '';
+                      }}
+                      className="flex items-center gap-2 mt-2"
+                    >
+                      <input
+                        name="comment"
+                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        placeholder="Write a comment..."
+                      />
+                      <button type="submit" className="px-3 py-2 text-sm font-medium text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                        Send
+                      </button>
+                    </form>
+                  </div>
                 </div>
-                <div className="mt-3">
-                  {p.comments.map((c) => (
-                    <p key={c._id} className="text-sm text-gray-600 dark:text-gray-400">
-                      <b>{c.user?.username || ''}:</b> {c.text}
-                    </p>
-                  ))}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleComment(p._id, e.target.comment.value);
-                      e.target.comment.value = '';
-                    }}
-                    className="flex gap-2 mt-2"
-                  >
-                    <input name="comment" className="flex-1 p-2 border rounded-lg" placeholder="Write a comment..." />
-                    <button type="submit" className="px-3 py-1 bg-gray-200 rounded-lg">Send</button>
-                  </form>
-                </div>
-              </div>
+              </article>
             ))}
             {posts.length === 0 && (
               <p className="text-sm text-gray-500">No posts yet.</p>
             )}
           </div>
-        </div>
+        </section>
+      </div>
     </div>
   );
 }
