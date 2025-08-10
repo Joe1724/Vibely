@@ -50,6 +50,23 @@ export default function UserProfile() {
     fetchAll();
   };
 
+  const openOrStartChat = async () => {
+    try {
+      // try to start or get direct conversation
+      const res = await axios.post(
+        'http://localhost:5000/api/chat/conversations/direct',
+        { userId: id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const convo = res.data;
+      // navigate via query param to open in sidebar
+      window.history.pushState({}, '', `?c=${convo._id}`);
+      // trigger sidebar to pick it up (location change already does)
+    } catch (e) {
+      alert('Unable to start conversation');
+    }
+  };
+
   if (!profile) return <div className="p-4">Loading...</div>;
 
   return (
@@ -64,7 +81,8 @@ export default function UserProfile() {
           {profile.avatar && (
             <img src={`http://localhost:5000${profile.avatar}`} alt="avatar" className="w-24 h-24 rounded-full" />
           )}
-          <h2 className="mt-2 text-2xl font-semibold text-gray-800 dark:text-gray-100">{profile.username}</h2>
+          <h2 className="mt-2 text-2xl font-semibold text-gray-800 dark:text-gray-100">{[profile.firstName, profile.middleName, profile.surname].filter(Boolean).join(' ') || profile.username}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{profile.username ? `@${profile.username}` : ''}</p>
           <p className="text-gray-600 dark:text-gray-300">{profile.bio}</p>
           <div className="flex items-center gap-4 mt-3 text-sm text-gray-600 dark:text-gray-300">
             <span>{profile.followers?.length || 0} followers</span>
@@ -77,6 +95,12 @@ export default function UserProfile() {
               className="px-3 py-1 text-sm text-white bg-blue-600 rounded"
             >
               {profile.followers?.some((f) => f._id === user._id) ? 'Unfollow' : 'Follow'}
+            </button>
+            <button
+              onClick={openOrStartChat}
+              className="px-3 py-1 ml-2 text-sm bg-gray-200 rounded dark:bg-gray-700"
+            >
+              Message
             </button>
           </div>
         </div>

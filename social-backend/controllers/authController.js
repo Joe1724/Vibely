@@ -4,18 +4,26 @@ import jwt from 'jsonwebtoken';
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, firstName, middleName = '', surname } = req.body;
 
-    // Check if user exists
+    if (!firstName || !surname) {
+      return res.status(400).json({ message: 'firstName and surname are required' });
+    }
+
+    // Check if user exists by email
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: 'Email already registered' });
+
+    // Optionally check username uniqueness
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) return res.status(400).json({ message: 'Username already taken' });
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Create user
-    user = new User({ username, email, passwordHash });
+    user = new User({ username, email, firstName, middleName, surname, passwordHash });
     await user.save();
 
     // Create token
@@ -23,7 +31,17 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       token,
-      user: { id: user._id, username: user.username, email: user.email, bio: user.bio, avatar: user.avatar }
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        surname: user.surname,
+        bio: user.bio,
+        avatar: user.avatar,
+        cover: user.cover,
+      }
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -47,7 +65,17 @@ export const login = async (req, res) => {
 
     res.json({
       token,
-      user: { id: user._id, username: user.username, email: user.email, bio: user.bio, avatar: user.avatar }
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        surname: user.surname,
+        bio: user.bio,
+        avatar: user.avatar,
+        cover: user.cover,
+      }
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

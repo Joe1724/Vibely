@@ -24,12 +24,12 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center w-screen min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-        <h2 className="text-3xl font-semibold text-center mb-6 text-gray-800 dark:text-gray-100">Login</h2>
+    <div className="flex items-center justify-center w-screen min-h-screen px-4 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg dark:bg-gray-800">
+        <h2 className="mb-6 text-3xl font-semibold text-center text-gray-800 dark:text-gray-100">Login</h2>
 
         {error && (
-          <p className="mb-4 text-sm text-red-600 bg-red-100 p-2 rounded">{error}</p>
+          <p className="p-2 mb-4 text-sm text-red-600 bg-red-100 rounded">{error}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -55,7 +55,7 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md transition"
+            className="w-full py-3 font-semibold text-white transition bg-blue-600 rounded-md hover:bg-blue-700"
           >
             Login
           </button>

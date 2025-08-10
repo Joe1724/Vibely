@@ -88,7 +88,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex items-center justify-center w-screen min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 px-4">
+    <div className="flex items-center justify-center w-full min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg dark:bg-gray-800">
         <div className="mb-4 -mx-8 -mt-8">
           {user.cover ? (
@@ -106,7 +106,8 @@ export default function Profile() {
           {user.avatar && (
             <img src={`http://localhost:5000${user.avatar}`} alt="avatar" className="w-24 h-24 mx-auto rounded-full" />
           )}
-          <p><span className="font-bold">Username:</span> {user.username}</p>
+          <p><span className="font-bold">Name:</span> {[user.firstName, user.middleName, user.surname].filter(Boolean).join(' ') || '—'}</p>
+          <p><span className="font-bold">Username:</span> {user.username ? `@${user.username}` : '—'}</p>
           <p><span className="font-bold">Email:</span> {user.email}</p>
           {isEditing ? (
             <form onSubmit={handleSave} className="space-y-3">
