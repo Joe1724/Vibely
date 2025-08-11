@@ -24,25 +24,26 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 dark:from-gray-900 dark:to-gray-950">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white/90 p-8 shadow-xl ring-1 ring-black/5 backdrop-blur dark:bg-gray-800/80">
-        <h2 className="mb-6 text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">Login</h2>
-
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="w-full max-w-md p-8 bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-xl dark:border-gray-700">
+        <h2 className="mb-6 text-3xl font-bold text-center text-gray-900 dark:text-white">Welcome Back!</h2>
+        <p className="mb-6 text-center text-gray-600 dark:text-gray-400">Sign in to your account to continue.</p>
+ 
         {error && (
-          <p className="p-2 mb-4 text-sm text-red-600 bg-red-100 rounded">{error}</p>
+          <p className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-300">{error}</p>
         )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+ 
+        <form onSubmit={handleSubmit} className="space-y-5">
           <input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder="Email Address"
             onChange={handleChange}
             value={form.email}
             required
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:placeholder-gray-400 dark:text-white"
+            className="w-full px-4 py-3 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
           />
-
+ 
           <input
             type="password"
             name="password"
@@ -50,12 +51,12 @@ export default function Login() {
             onChange={handleChange}
             value={form.password}
             required
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:placeholder-gray-400 dark:text-white"
+            className="w-full px-4 py-3 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
           />
-
+ 
           <button
             type="submit"
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white shadow hover:bg-blue-700"
+            className="w-full py-3 font-semibold text-white transition-colors duration-200 ease-in-out rounded-lg shadow-md bg-primary-DEFAULT hover:bg-primary-dark"
           >
             Login
           </button>

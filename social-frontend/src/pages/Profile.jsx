@@ -128,145 +128,145 @@ export default function Profile() {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-64px)] bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 dark:from-gray-900 dark:to-gray-950">
-      <div className="w-full max-w-5xl mx-auto space-y-6">
+    <div className="w-full min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 px-4 py-8">
+      <div className="w-full max-w-5xl mx-auto space-y-8">
         {/* Profile hero */}
-        <section className="relative overflow-hidden shadow-xl rounded-2xl bg-white/90 dark:bg-gray-800/80 backdrop-blur ring-1 ring-black/5">
+        <section className="relative overflow-hidden bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-xl dark:border-gray-700">
           <div className="relative">
-            <div className="w-full h-44 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-indigo-600 dark:to-blue-500">
+            <div className="w-full h-48 bg-gradient-to-r from-primary-DEFAULT to-blue-600 dark:from-primary-dark dark:to-blue-700">
               {user.cover && (
-                <img src={`http://localhost:5000${user.cover}`} alt="cover" className="object-cover w-full h-44" />
+                <img src={`http://localhost:5000${user.cover}`} alt="cover" className="object-cover w-full h-48" />
               )}
             </div>
             {user.avatar && (
               <img
                 src={`http://localhost:5000${user.avatar}`}
                 alt="avatar"
-                className="absolute object-cover w-24 h-24 -translate-x-1/2 rounded-full left-1/2 -bottom-12 ring-4 ring-white dark:ring-gray-800"
+                className="absolute object-cover -translate-x-1/2 rounded-full shadow-md w-28 h-28 left-1/2 -bottom-14 ring-4 ring-white dark:ring-gray-800"
               />
             )}
           </div>
-          <div className="px-6 pt-16 pb-6 text-center">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          <div className="px-6 pt-20 pb-8 text-center">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
               {[user.firstName, user.middleName, user.surname].filter(Boolean).join(' ') || user.username || 'Profile'}
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{user.username ? `@${user.username}` : ''}</p>
+            <p className="mt-1 text-base text-gray-600 dark:text-gray-400">{user.username ? `@${user.username}` : ''}</p>
 
-            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-600 dark:text-gray-300">
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-700">
-                <span className="w-2 h-2 bg-blue-500 rounded-full" />
+            <div className="flex items-center justify-center gap-6 mt-5 text-sm text-gray-600 dark:text-gray-300">
+              <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1.5 font-medium">
+                <span className="w-2.5 h-2.5 bg-primary-DEFAULT rounded-full" />
                 {Array.isArray(user.followers) ? user.followers.length : 0} followers
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-700">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1.5 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-secondary-DEFAULT" />
                 {Array.isArray(user.following) ? user.following.length : 0} following
               </span>
             </div>
 
-            <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+            <div className="mt-6 text-base text-gray-700 dark:text-gray-300">
               <p className="flex items-center justify-center gap-2"><span className="font-semibold">Email:</span> {user.email}</p>
-              <p className="mt-1 text-gray-700 dark:text-gray-300"><span className="font-semibold">Bio:</span> {user.bio || '—'}</p>
+              <p className="mt-2 text-gray-700 dark:text-gray-300"><span className="font-semibold">Bio:</span> {user.bio || 'No bio provided.'}</p>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-8">
               {isEditing ? (
-                <form onSubmit={handleSave} className="max-w-2xl mx-auto space-y-4 text-left">
+                <form onSubmit={handleSave} className="max-w-2xl mx-auto space-y-5 text-left">
                   {saveError && (
-                    <p className="p-2 text-sm text-red-600 bg-red-100 rounded-md">{saveError}</p>
+                    <p className="p-3 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-300">{saveError}</p>
                   )}
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">First name</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">First name</label>
                       <input
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        className="w-full px-4 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         required
                       />
                     </div>
                     <div>
-                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Middle name (optional)</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Middle name (optional)</label>
                       <input
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        className="w-full px-4 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
                         value={middleName}
                         onChange={(e) => setMiddleName(e.target.value)}
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Surname</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Surname</label>
                       <input
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        className="w-full px-4 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
                         value={surname}
                         onChange={(e) => setSurname(e.target.value)}
                         required
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Username</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
                       <input
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                        className="w-full px-4 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
                       />
-                      <p className="mt-1 text-xs text-gray-500">Shown as @username</p>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Shown as @username</p>
                     </div>
                   </div>
                   <div>
-                    <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Bio</label>
+                    <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Bio</label>
                     <textarea
-                      className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
+                      className="w-full px-4 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                     />
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Avatar</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Avatar</label>
                       <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-                        className="w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white hover:file:bg-blue-700"
+                        className="w-full text-sm transition-colors duration-200 ease-in-out file:mr-4 file:rounded-lg file:border-0 file:bg-primary-DEFAULT file:px-4 file:py-2 file:text-white hover:file:bg-primary-dark"
                       />
                     </div>
                     <div>
-                      <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Cover photo</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Cover photo</label>
                       <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
-                        className="w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700"
+                        className="w-full text-sm transition-colors duration-200 ease-in-out file:mr-4 file:rounded-lg file:border-0 file:bg-secondary-DEFAULT file:px-4 file:py-2 file:text-white hover:file:bg-secondary-dark"
                       />
                     </div>
                   </div>
-                  <div className="flex justify-center gap-2">
+                  <div className="flex justify-center gap-3">
                     <button
                       disabled={saving}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 disabled:opacity-60"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2 text-base font-medium text-white transition-all duration-200 ease-in-out rounded-lg shadow-md bg-primary-DEFAULT hover:bg-primary-dark disabled:opacity-60"
                     >
                       {saving ? 'Saving...' : 'Save changes'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                      className="px-5 py-2 text-base font-medium text-gray-800 transition-colors duration-200 ease-in-out bg-gray-200 rounded-lg shadow-sm hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                     >
                       Cancel
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-4">
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-base font-medium text-white transition-colors duration-200 ease-in-out rounded-lg shadow-md bg-primary-DEFAULT hover:bg-primary-dark"
                   >
                     Edit Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow hover:bg-red-700"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-base font-medium text-white transition-colors duration-200 ease-in-out bg-red-600 rounded-lg shadow-md hover:bg-red-700"
                   >
                     Logout
                   </button>
@@ -278,97 +278,126 @@ export default function Profile() {
 
         {/* Posts */}
         <section>
-          <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">Your Posts</h3>
-          <div className="space-y-4">
+          <h3 className="mb-5 text-2xl font-bold text-gray-900 dark:text-white">Your Posts</h3>
+          <div className="space-y-6">
             {posts.map((p) => (
-              <article key={p._id} className="overflow-hidden shadow rounded-2xl bg-white/90 backdrop-blur ring-1 ring-black/5 dark:bg-gray-800/80">
+              <article key={p._id} className="p-6 bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-xl dark:border-gray-700">
                 {p.image && (
-                  <img src={`http://localhost:5000${p.image}`} alt="" className="w-full max-h-[420px] object-cover" />
+                  <img src={`http://localhost:5000${p.image}`} alt="" className="w-full max-h-[420px] object-cover rounded-lg mb-4" />
                 )}
                 {p.video && (
-                  <video src={`http://localhost:5000${p.video}`} controls className="w-full max-h-[420px] object-contain bg-black" />
+                  <video src={`http://localhost:5000${p.video}`} controls className="w-full max-h-[420px] object-contain bg-black rounded-lg mb-4" />
                 )}
-                <div className="p-4">
-                  <p className="text-gray-800 whitespace-pre-wrap dark:text-gray-200">{p.text}</p>
+                <div className="mb-4">
+                  <p className="text-base text-gray-800 whitespace-pre-wrap dark:text-gray-200">{p.text}</p>
                   {Array.isArray(p.hashtags) && p.hashtags.length > 0 && (
-                    <div className="mt-1 space-x-2 text-xs text-blue-600 dark:text-blue-400">
+                    <div className="flex flex-wrap gap-2 mt-2 text-sm text-primary-DEFAULT dark:text-primary-light">
                       {p.hashtags.map((h) => (
-                        <span key={h}>#{h}</span>
+                        <span key={h} className="font-medium">#{h}</span>
                       ))}
                     </div>
                   )}
-                  <div className="flex items-center gap-3 mt-3">
-                    <div
-                      className="relative"
-                      onMouseEnter={() => setOpenReactionPostId(p._id)}
-                      onMouseLeave={() => setOpenReactionPostId((cur) => (cur === p._id ? null : cur))}
+                </div>
+                <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setOpenReactionPostId(p._id)}
+                    onMouseLeave={() => setOpenReactionPostId((cur) => (cur === p._id ? null : cur))}
+                  >
+                    <button
+                      onClick={() => {
+                        const mine = getMyReaction(p);
+                        if (mine) clearReaction(p._id);
+                        else setReaction(p._id, 'love');
+                      }}
+                      className={`inline-flex items-center gap-1 text-lg transition-colors duration-200 ease-in-out ${getMyReaction(p) ? 'text-red-500' : 'text-gray-500 hover:text-primary-DEFAULT'}`}
                     >
-                      <button
-                        onClick={() => {
-                          const mine = getMyReaction(p);
-                          if (mine) clearReaction(p._id);
-                          else setReaction(p._id, 'love');
-                        }}
-                        className={`inline-flex items-center gap-1 ${getMyReaction(p) ? 'text-red-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                      >
-                        <span>{getMyReaction(p) ? '❤️' : '🤍'}</span>
-                      </button>
-                      {openReactionPostId === p._id && (
-                        <div className="absolute left-0 z-10 flex items-center gap-2 px-2 py-1 rounded-full shadow -top-10 bg-white/95 dark:bg-gray-800/95 ring-1 ring-black/5">
-                          <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'love')}>❤️</button>
-                          <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'haha')}>😂</button>
-                          <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'wow')}>😮</button>
-                        </div>
-                      )}
-                    </div>
-                    {(() => {
-                      const c = getReactionCounts(p);
-                      const total = (c.love || 0) + (c.haha || 0) + (c.wow || 0);
-                      if (total === 0) return null;
-                      return (
-                        <div className="inline-flex items-center gap-2 text-xs text-gray-500">
-                          {c.love > 0 && (
-                            <span className="inline-flex items-center gap-1"><span>❤️</span><span>{c.love}</span></span>
-                          )}
-                          {c.haha > 0 && (
-                            <span className="inline-flex items-center gap-1"><span>😂</span><span>{c.haha}</span></span>
-                          )}
-                          {c.wow > 0 && (
-                            <span className="inline-flex items-center gap-1"><span>😮</span><span>{c.wow}</span></span>
-                          )}
-                        </div>
-                      );
-                    })()}
+                      <span>{getMyReaction(p) ? '❤️' : '🤍'}</span>
+                    </button>
+                    {openReactionPostId === p._id && (
+                      <div className="absolute left-0 z-10 flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-lg -top-12 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700">
+                        <button className="text-2xl transition-transform duration-200 ease-in-out hover:scale-125" onClick={() => setReaction(p._id, 'love')}>❤️</button>
+                        <button className="text-2xl transition-transform duration-200 ease-in-out hover:scale-125" onClick={() => setReaction(p._id, 'haha')}>😂</button>
+                        <button className="text-2xl transition-transform duration-200 ease-in-out hover:scale-125" onClick={() => setReaction(p._id, 'wow')}>😮</button>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-3">
-                    {p.comments.map((c) => (
-                      <p key={c._id} className="text-sm text-gray-600 dark:text-gray-400">
+                  {(() => {
+                    const c = getReactionCounts(p);
+                    const total = (c.love || 0) + (c.haha || 0) + (c.wow || 0);
+                    if (total === 0) return null;
+                    return (
+                      <div className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        {c.love > 0 && (
+                          <span className="inline-flex items-center gap-1"><span>❤️</span><span>{c.love}</span></span>
+                        )}
+                        {c.haha > 0 && (
+                          <span className="inline-flex items-center gap-1"><span>😂</span><span>{c.haha}</span></span>
+                        )}
+                        {c.wow > 0 && (
+                          <span className="inline-flex items-center gap-1"><span>😮</span><span>{c.wow}</span></span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                  {p.comments.map((c) => (
+                    <div key={c._id} className="p-2 mb-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                      <p className="text-sm text-gray-800 dark:text-gray-200">
                         <b>{c.user?.username || ''}:</b> {c.text}
                       </p>
-                    ))}
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleComment(p._id, e.target.comment.value);
-                        e.target.comment.value = '';
-                      }}
-                      className="flex items-center gap-2 mt-2"
-                    >
-                      <input
-                        name="comment"
-                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900"
-                        placeholder="Write a comment..."
-                      />
-                      <button type="submit" className="px-3 py-2 text-sm font-medium text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-                        Send
-                      </button>
-                    </form>
-                  </div>
+                      {Array.isArray(c.replies) && c.replies.length > 0 && (
+                        <div className="mt-2 ml-4 space-y-2">
+                          {c.replies.map((r) => (
+                            <p key={r._id} className="text-xs text-gray-600 dark:text-gray-300">
+                              <b>{r.user?.username}:</b> {r.text}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const text = e.target.reply.value;
+                          addReply(p._id, c._id, text);
+                          e.target.reply.value = '';
+                        }}
+                        className="flex items-center gap-2 mt-2 ml-4"
+                      >
+                        <input
+                          name="reply"
+                          className="flex-1 px-3 py-2 text-sm text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-1 focus:ring-primary-DEFAULT focus:border-transparent"
+                          placeholder="Reply..."
+                        />
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-gray-800 transition-colors duration-200 ease-in-out bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">
+                          Reply
+                        </button>
+                      </form>
+                    </div>
+                  ))}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleComment(p._id, e.target.comment.value);
+                      e.target.comment.value = '';
+                    }}
+                    className="flex items-center gap-2 mt-3"
+                  >
+                    <input
+                      name="comment"
+                      className="flex-1 px-4 py-2 text-sm text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
+                      placeholder="Write a comment..."
+                    />
+                    <button type="submit" className="px-4 py-2 text-sm font-medium text-white transition-colors duration-200 ease-in-out rounded-lg shadow-md bg-primary-DEFAULT hover:bg-primary-dark">
+                      Send
+                    </button>
+                  </form>
                 </div>
               </article>
             ))}
             {posts.length === 0 && (
-              <p className="text-sm text-gray-500">No posts yet.</p>
+              <p className="py-4 text-sm text-center text-gray-500 dark:text-gray-400">No posts yet.</p>
             )}
           </div>
         </section>
