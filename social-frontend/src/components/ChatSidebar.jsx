@@ -322,87 +322,27 @@ export default function ChatSidebar({ isOpen, setIsOpen }) {
     <>
       {/* Slide-in sidebar */}
       <aside
-        className={`fixed right-0 top-0 bottom-0 hidden md:flex z-50 transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } border-l border-gray-200 dark:border-gray-700`}
-        style={{ width: `${sidebarWidth}px` }}>
-        {/* Resizer handle */}
-        <div
-          className="absolute top-0 left-0 z-50 w-2 h-full cursor-ew-resize"
-          onMouseDown={startResizing}
-        />
-        <div className="flex flex-col w-full h-full overflow-hidden bg-white shadow-xl dark:bg-gray-900">
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 dark:border-gray-700 dark:bg-gray-900">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Messages</h3>
-          <div className="flex items-center gap-3">
+        className={`fixed right-6 bottom-0 z-50 w-full max-w-sm bg-white dark:bg-gray-800 rounded-t-xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'
+        }`}
+      >
+        <div className="flex flex-col h-[60vh] max-h-[60vh]">
+          <div
+            className="flex items-center justify-between px-6 py-4 cursor-pointer bg-gray-50 dark:bg-gray-700 rounded-t-xl"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Messages</h3>
             <button
-              onClick={() => setIsOpen(false)}
-              className="p-2 text-gray-700 transition-colors rounded-full dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
-              title="Hide chat"
+              className="p-2 text-gray-700 transition-colors rounded-full dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+              title={isOpen ? "Collapse" : "Expand"}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+              {isOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+              )}
             </button>
-            <button
-              onClick={() => setShowCreateGroup(true)}
-              className="px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              New Group
-            </button>
-            {activeId && (
-              <div className="relative">
-                <button onClick={() => setShowMenu((v) => !v)} className="p-2 text-gray-700 transition-colors rounded-full dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700" title="Conversation menu"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></svg></button>
-                {showMenu && (
-                  <div className="absolute right-0 z-50 p-5 mt-2 bg-white border border-gray-200 shadow-xl rounded-xl w-72 dark:bg-gray-800 dark:border-gray-700">
-                    {currentConvo()?.isGroup ? (
-                      <>
-                        <div className="mb-4 text-base font-bold text-gray-700 dark:text-gray-300">Group Settings</div>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Group name</label>
-                            <form onSubmit={renameGroup} className="flex gap-2">
-                              <input value={newName} onChange={(e) => setNewName(e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500" />
-                              <button disabled={!amAdmin() || !newName.trim()} className="px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg disabled:opacity-50 hover:bg-blue-700">Save</button>
-                            </form>
-                          </div>
-                          <div>
-                            <div className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Members</div>
-                            <div className="pr-2 space-y-2 overflow-y-auto max-h-40">
-                              {(currentConvo()?.members || []).map((m) => {
-                                const isAdmin = (currentConvo()?.admins || []).map(String).includes(String(m._id)) || String(currentConvo()?.createdBy) === String(m._id);
-                                const isOwner = String(currentConvo()?.createdBy) === String(m._id);
-                                return (
-                                  <div key={m._id} className="flex items-center justify-between text-sm text-gray-800 dark:text-gray-200">
-                                    <span className="truncate">{m.username}{isOwner ? ' (owner)' : isAdmin ? ' (admin)' : ''}</span>
-                                    {amOwner() && String(m._id) !== String(user._id) && !isOwner && (
-                                      isAdmin ? (
-                                        <button disabled={roleBusy} onClick={() => toggleAdmin(m._id, false)} className="px-3 py-1 text-xs text-gray-700 transition-colors bg-gray-200 rounded-lg dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">Remove admin</button>
-                                      ) : (
-                                        <button disabled={roleBusy} onClick={() => toggleAdmin(m._id, true)} className="px-3 py-1 text-xs text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">Make admin</button>
-                                      )
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-base text-gray-500 dark:text-gray-400">Direct conversation</div>
-                    )}
-                    <div className="pt-4 mt-5 border-t border-gray-200 dark:border-gray-700">
-                      <div className="mb-2 text-base font-bold text-gray-700 dark:text-gray-300">Your nickname</div>
-                      <form onSubmit={setMyNickname} className="flex gap-2">
-                        <input value={nickname} onChange={(e) => setNickname(e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500" placeholder="Optional" />
-                        <button disabled={nicknameBusy} className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-gray-200 rounded-lg dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">Save</button>
-                      </form>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </div>
 
           <div className="flex flex-1 min-h-0 gap-3 p-3">
             <div className="w-5/12 min-w-[170px] flex flex-col">

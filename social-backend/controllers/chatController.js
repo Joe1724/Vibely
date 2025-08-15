@@ -1,6 +1,8 @@
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import crypto from 'crypto';
+import { createNotification } from './notificationController.js';
+import { createActivity } from '../utils/activityLogger.js';
 
 // List my conversations (accepted only by default)
 export const listConversations = async (req, res) => {
@@ -113,7 +115,27 @@ export const sendMessage = async (req, res) => {
     const msg = await Message.create({ conversation: id, sender: me, text, attachments: [] });
     convo.lastMessageAt = new Date();
     await convo.save();
+
+    // Create notifications for all other members in the conversation
+    for (const memberId of convo.members) {
+      if (String(memberId) !== String(me)) {
+        await createNotification({
+          recipient: memberId,
+          sender: me,
+          type: 'message',
+          refId: msg._id // Reference the message ID
+        });
+      }
+    }
+
     res.status(201).json(msg);
+
+    // Log activity for sending a message
+    await createActivity({
+      user: me,
+      type: 'message',
+      refId: msg._id
+    });
   } catch (e) {
     res.status(500).json({ message: 'Server error' });
   }

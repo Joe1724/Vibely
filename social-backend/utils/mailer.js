@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { getOtpEmailTemplate, getResetPasswordEmailTemplate } from './emailTemplates.js';
 
 dotenv.config();
 
@@ -42,4 +43,18 @@ export async function sendMail({ to, subject, text, html }) {
     html,
   });
   return info;
+}
+
+export async function sendOtpEmail(to, otp) {
+  const subject = 'Your Vibely Verification Code';
+  const html = getOtpEmailTemplate(otp);
+  const text = `Your verification code is: ${otp}`;
+  return sendMail({ to, subject, text, html });
+}
+
+export async function sendPasswordResetEmail(to, resetLink) {
+  const subject = 'Reset Your Vibely Password';
+  const html = getResetPasswordEmailTemplate(resetLink);
+  const text = `Reset your password using this link: ${resetLink}`;
+  return sendMail({ to, subject, text, html });
 }

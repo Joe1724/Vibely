@@ -105,37 +105,48 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 dark:from-gray-900 dark:to-gray-950">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="w-full max-w-5xl mx-auto">
         {/* Profile header */}
-        <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur shadow-xl ring-1 ring-black/5">
+        <div className="relative overflow-hidden shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur ring-1 ring-black/5">
           <div className="relative">
-            <div className="h-48 w-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-indigo-600 dark:to-blue-500">
+            <div className="w-full h-48" style={{ backgroundColor: profile.profileThemeColor || '#3B82F6' }}>
               {profile.cover && (
-                <img src={`http://localhost:5000${profile.cover}`} alt="cover" className="h-48 w-full object-cover" />
+                <img src={`http://localhost:5000${profile.cover}`} alt="cover" className="object-cover w-full h-48" />
               )}
             </div>
             {profile.avatar && (
               <img
                 src={`http://localhost:5000${profile.avatar}`}
                 alt="avatar"
-                className="absolute -bottom-12 left-6 h-24 w-24 rounded-full ring-4 ring-white dark:ring-gray-800 object-cover"
+                className="absolute object-cover w-24 h-24 rounded-full -bottom-12 left-6 ring-4 ring-white dark:ring-gray-800"
               />
             )}
           </div>
           <div className="px-6 pt-16 pb-6">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{[profile.firstName, profile.middleName, profile.surname].filter(Boolean).join(' ') || profile.username}</h2>
+                <h2 className="flex items-center gap-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  {[profile.firstName, profile.middleName, profile.surname].filter(Boolean).join(' ') || profile.username}
+                  {profile.isVerified && (
+                    <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+                    </svg>
+                  )}
+                </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{profile.username ? `@${profile.username}` : ''}</p>
                 <p className="mt-2 text-gray-700 dark:text-gray-300">{profile.bio}</p>
-                <div className="mt-3 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-4 mt-3 text-sm text-gray-600 dark:text-gray-300">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700">
-                    <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: profile.profileAccentColor || '#10B981' }}></span>
                     {profile.followers?.length || 0} followers
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: profile.profileAccentColor || '#10B981' }}></span>
                     {profile.following?.length || 0} following
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: profile.profileAccentColor || '#10B981' }}></span>
+                    {profile.profileViews || 0} views
                   </span>
                 </div>
               </div>
@@ -143,13 +154,13 @@ export default function UserProfile() {
                 <button
                   disabled={busy}
                   onClick={toggleFollow}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 disabled:opacity-60"
                 >
                   {profile.followers?.some((f) => f._id === user._id) ? 'Unfollow' : 'Follow'}
                 </button>
                 <button
                   onClick={openOrStartChat}
-                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                  className="px-4 py-2 text-sm font-medium text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                 >
                   Message
                 </button>
@@ -161,19 +172,19 @@ export default function UserProfile() {
         {/* Posts */}
         <div className="mt-6 space-y-4">
           {posts.map((p) => (
-            <article key={p._id} onMouseEnter={() => addView(p._id)} className="overflow-hidden rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur shadow ring-1 ring-black/5">
+            <article key={p._id} onMouseEnter={() => addView(p._id)} className="overflow-hidden shadow rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur ring-1 ring-black/5">
               {p.image && <img src={`http://localhost:5000${p.image}`} alt="" className="w-full max-h-[420px] object-cover" />}
               <div className="p-4">
-                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{p.text}</p>
+                <p className="text-gray-800 whitespace-pre-wrap dark:text-gray-200">{p.text}</p>
                 {Array.isArray(p.hashtags) && p.hashtags.length > 0 && (
-                  <div className="mt-1 text-xs text-blue-600 dark:text-blue-400 space-x-2">
+                  <div className="mt-1 space-x-2 text-xs text-blue-600 dark:text-blue-400">
                     {p.hashtags.map((h) => (
                       <span key={h}>#{h}</span>
                     ))}
                   </div>
                 )}
                 {p.video && <video src={`http://localhost:5000${p.video}`} controls className="w-full max-h-[420px] object-contain bg-black mt-2" />}
-                <div className="mt-3 flex items-center gap-3">
+                <div className="flex items-center gap-3 mt-3">
                   <div
                     className="relative"
                     onMouseEnter={() => setOpenReactionPostId(p._id)}
@@ -190,10 +201,10 @@ export default function UserProfile() {
                       <span>{getMyReaction(p) ? '❤️' : '🤍'}</span>
                     </button>
                     {openReactionPostId === p._id && (
-                      <div className="absolute z-10 -top-10 left-0 flex items-center gap-2 rounded-full bg-white/95 dark:bg-gray-800/95 shadow px-2 py-1 ring-1 ring-black/5">
-                        <button className="hover:scale-110 transition" onClick={() => setReaction(p._id, 'love')}>❤️</button>
-                        <button className="hover:scale-110 transition" onClick={() => setReaction(p._id, 'haha')}>😂</button>
-                        <button className="hover:scale-110 transition" onClick={() => setReaction(p._id, 'wow')}>😮</button>
+                      <div className="absolute left-0 z-10 flex items-center gap-2 px-2 py-1 rounded-full shadow -top-10 bg-white/95 dark:bg-gray-800/95 ring-1 ring-black/5">
+                        <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'love')}>❤️</button>
+                        <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'haha')}>😂</button>
+                        <button className="transition hover:scale-110" onClick={() => setReaction(p._id, 'wow')}>😮</button>
                       </div>
                     )}
                   </div>
@@ -261,14 +272,14 @@ export default function UserProfile() {
                       comment(p._id, e.target.comment.value);
                       e.target.comment.value = '';
                     }}
-                    className="mt-2 flex items-center gap-2"
+                    className="flex items-center gap-2 mt-2"
                   >
                     <input
                       name="comment"
-                      className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Write a comment..."
                     />
-                    <button type="submit" className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Send</button>
+                    <button type="submit" className="px-3 py-2 text-sm font-medium text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Send</button>
                   </form>
                 </div>
               </div>

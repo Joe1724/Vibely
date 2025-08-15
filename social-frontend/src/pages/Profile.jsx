@@ -19,6 +19,9 @@ export default function Profile() {
   const [posts, setPosts] = useState([]);
   const [saveError, setSaveError] = useState('');
   const [openReactionPostId, setOpenReactionPostId] = useState(null);
+  const [profileThemeColor, setProfileThemeColor] = useState(user.profileThemeColor || '#3B82F6');
+  const [profileAccentColor, setProfileAccentColor] = useState(user.profileAccentColor || '#10B981');
+  const [isPrivate, setIsPrivate] = useState(user.isPrivate || false);
 
   const handleLogout = () => {
     logout();
@@ -37,6 +40,9 @@ export default function Profile() {
       formData.append('surname', surname);
       formData.append('username', username);
       if (avatarFile) formData.append('avatar', avatarFile);
+      formData.append('profileThemeColor', profileThemeColor);
+      formData.append('profileAccentColor', profileAccentColor);
+      formData.append('isPrivate', isPrivate);
 
       await axios.put('http://localhost:5000/api/users/me', formData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -133,7 +139,7 @@ export default function Profile() {
         {/* Profile hero */}
         <section className="relative overflow-hidden bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-xl dark:border-gray-700">
           <div className="relative">
-            <div className="w-full h-48 bg-gradient-to-r from-primary-DEFAULT to-blue-600 dark:from-primary-dark dark:to-blue-700">
+            <div className="w-full h-48" style={{ backgroundColor: user.profileThemeColor || '#3B82F6' }}>
               {user.cover && (
                 <img src={`http://localhost:5000${user.cover}`} alt="cover" className="object-cover w-full h-48" />
               )}
@@ -147,19 +153,28 @@ export default function Profile() {
             )}
           </div>
           <div className="px-6 pt-20 pb-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h2 className="flex items-center justify-center gap-2 text-3xl font-bold text-gray-900 dark:text-white">
               {[user.firstName, user.middleName, user.surname].filter(Boolean).join(' ') || user.username || 'Profile'}
+              {user.isVerified && (
+                <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+                </svg>
+              )}
             </h2>
             <p className="mt-1 text-base text-gray-600 dark:text-gray-400">{user.username ? `@${user.username}` : ''}</p>
 
             <div className="flex items-center justify-center gap-6 mt-5 text-sm text-gray-600 dark:text-gray-300">
               <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1.5 font-medium">
-                <span className="w-2.5 h-2.5 bg-primary-DEFAULT rounded-full" />
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: user.profileAccentColor || '#10B981' }} />
                 {Array.isArray(user.followers) ? user.followers.length : 0} followers
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1.5 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-secondary-DEFAULT" />
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: user.profileAccentColor || '#10B981' }} />
                 {Array.isArray(user.following) ? user.following.length : 0} following
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1.5 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: user.profileAccentColor || '#10B981' }} />
+                {user.profileViews || 0} views
               </span>
             </div>
 
@@ -239,6 +254,40 @@ export default function Profile() {
                         className="w-full text-sm transition-colors duration-200 ease-in-out file:mr-4 file:rounded-lg file:border-0 file:bg-secondary-DEFAULT file:px-4 file:py-2 file:text-white hover:file:bg-secondary-dark"
                       />
                     </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Profile Theme Color</label>
+                      <input
+                        type="color"
+                        value={profileThemeColor}
+                        onChange={(e) => setProfileThemeColor(e.target.value)}
+                        className="w-full h-10 px-2 py-1 border border-gray-300 rounded-lg cursor-pointer dark:border-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Profile Accent Color</label>
+                      <input
+                        type="color"
+                        value={profileAccentColor}
+                        onChange={(e) => setProfileAccentColor(e.target.value)}
+                        className="w-full h-10 px-2 py-1 border border-gray-300 rounded-lg cursor-pointer dark:border-gray-700"
+                      />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Private Account</span>
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={isPrivate}
+                          onChange={() => setIsPrivate(!isPrivate)}
+                        />
+                        <div className={`block w-14 h-8 rounded-full transition-colors ${isPrivate ? 'bg-primary-DEFAULT' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                        <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isPrivate ? 'translate-x-full' : ''}`}></div>
+                      </div>
+                    </label>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">If your account is private, only people you approve can see your photos and videos on Social.</p>
                   </div>
                   <div className="flex justify-center gap-3">
                     <button

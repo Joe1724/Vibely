@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const OtpCodeSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, index: true },
-    purpose: { type: String, required: true, enum: ['register'] },
+    purpose: { type: String, required: true, enum: ['register', 'reset_password'] },
     codeHash: { type: String, required: true },
     expiresAt: { type: Date, required: true, index: true },
     attempts: { type: Number, default: 0 },

@@ -22,6 +22,7 @@ const conversationSchema = new mongoose.Schema(
     requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     pendingFor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     lastMessageAt: { type: Date },
+    isFlagged: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

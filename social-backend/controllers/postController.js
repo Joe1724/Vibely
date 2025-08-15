@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import User from '../models/User.js';
+import { createNotification } from './notificationController.js';
+import { createActivity } from '../utils/activityLogger.js';
 
 // Ensure uploads dir exists (cross-platform)
 const __filename = fileURLToPath(import.meta.url);
@@ -65,6 +67,12 @@ export const createPost = async (req, res) => {
       mentions: mentionedUsers.map((u) => u._id),
     });
     const savedPost = await newPost.save();
+    // Log activity for post creation
+    await createActivity({
+      user: authenticatedUserId,
+      type: 'post',
+      refId: savedPost._id
+    });
     res.status(201).json(savedPost);
   } catch (error) {
     console.error('createPost error:', error);
@@ -80,6 +88,13 @@ export const getPosts = async (req, res) => {
     const usePagination = !!req.query.page || !!req.query.limit;
     const filter = {};
     if (req.query.user) {
+      const targetUser = await User.findById(req.query.user).select('isPrivate followers');
+      if (targetUser?.isPrivate) {
+        const meId = String(req.user?._id || req.user?.id || '');
+        if (String(targetUser._id) !== meId && !targetUser.followers.some(f => String(f) === meId)) {
+          return res.json(usePagination ? { posts: [], hasMore: false, nextPage: null } : []);
+        }
+      }
       filter.user = req.query.user;
     }
 
@@ -213,6 +228,35 @@ export const addComment = async (req, res) => {
 
     post.comments.unshift(comment);
     await post.save();
+
+    // Log activity for adding a comment
+    await createActivity({
+      user: req.user.id,
+      type: 'comment',
+      refId: post._id
+    });
+
+    // Create notification for post owner if not self-commenting
+    if (String(post.user) !== String(req.user.id)) {
+      await createNotification({
+        recipient: post.user,
+        sender: req.user.id,
+        type: 'comment',
+        refId: post._id
+      });
+    }
+
+    // Create notifications for mentioned users
+    for (const mentionedUser of mentionedUsers) {
+      if (String(mentionedUser._id) !== String(req.user.id)) { // Avoid notifying self
+        await createNotification({
+          recipient: mentionedUser._id,
+          sender: req.user.id,
+          type: 'comment', // Or 'mention' if a separate type is desired
+          refId: post._id
+        });
+      }
+    }
     const populated = await Post.findById(req.params.id)
       .populate('comments.user', 'username avatar')
       .populate('comments.replies.user', 'username avatar')
@@ -322,8 +366,27 @@ export const setReaction = async (req, res) => {
     post.reactions.push({ user: req.user.id, type });
     // keep legacy likes in sync only for love
     post.likes = post.likes.filter((u) => String(u) !== String(req.user.id));
-    if (type === 'love') post.likes.push(req.user.id);
+    if (type === 'love') {
+      post.likes.push(req.user.id);
+      // Create notification for post owner if not self-liking
+      if (String(post.user) !== String(req.user.id)) {
+        await createNotification({
+          recipient: post.user,
+          sender: req.user.id,
+          type: 'like',
+          refId: post._id
+        });
+      }
+    }
     await post.save();
+    // Log activity for liking a post
+    if (type === 'love') {
+      await createActivity({
+        user: req.user.id,
+        type: 'like',
+        refId: post._id
+      });
+    }
     res.json(post.reactions);
   } catch (error) {
     console.error('setReaction error:', error);
@@ -382,6 +445,20 @@ export const searchPosts = async (req, res) => {
       .populate('comments.replies.user', 'username avatar')
       .sort({ createdAt: -1 })
       .limit(50);
+
+    const postUserIds = posts.map(p => p.user._id);
+    const postUsers = await User.find({_id: {$in: postUserIds}}).select('isPrivate followers');
+    const meId = String(req.user?._id || req.user?.id || '');
+
+    const filteredPosts = posts.filter(p => {
+      const author = postUsers.find(u => String(u._id) === String(p.user._id));
+      if (!author || author.isPrivate === false) return true;
+      if (String(author._id) === meId) return true;
+      if (author.followers.some(fId => String(fId) === meId)) return true;
+      return false;
+    });
+
+    res.json(filteredPosts);
     res.json(posts);
   } catch (error) {
     console.error('searchPosts error:', error);

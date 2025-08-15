@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.jsx';
 
 export default function Login() {
@@ -54,6 +54,14 @@ export default function Login() {
             className="w-full px-4 py-3 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out bg-white border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent"
           />
  
+          <div className="text-right">
+            <Link to="/forgot-password"
+              className="text-sm font-medium text-primary-DEFAULT hover:underline dark:text-primary-light"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
           <button
             type="submit"
             className="w-full py-3 font-semibold text-white transition-colors duration-200 ease-in-out rounded-lg shadow-md bg-primary-DEFAULT hover:bg-primary-dark"
@@ -61,6 +69,12 @@ export default function Login() {
             Login
           </button>
         </form>
+        <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
+          Don't have an account?{' '}
+          <Link to="/register" className="font-medium text-primary-DEFAULT hover:underline dark:text-primary-light">
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   );

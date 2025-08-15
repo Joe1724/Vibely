@@ -1,4 +1,6 @@
 import User from '../models/User.js';
+import { createNotification } from './notificationController.js';
+import { createActivity } from '../utils/activityLogger.js';
 import Post from '../models/Post.js';
 import mongoose from 'mongoose';
 import multer from 'multer';
@@ -60,6 +62,9 @@ export const updateProfile = async (req, res) => {
     if (typeof req.body.firstName === 'string' && req.body.firstName.trim()) updates.firstName = req.body.firstName.trim();
     if (typeof req.body.middleName === 'string') updates.middleName = req.body.middleName.trim();
     if (typeof req.body.surname === 'string' && req.body.surname.trim()) updates.surname = req.body.surname.trim();
+    if (typeof req.body.profileThemeColor === 'string') updates.profileThemeColor = req.body.profileThemeColor;
+    if (typeof req.body.profileAccentColor === 'string') updates.profileAccentColor = req.body.profileAccentColor;
+    if (typeof req.body.isPrivate === 'boolean') updates.isPrivate = req.body.isPrivate;
 
     // Username change with uniqueness check
     if (typeof req.body.username === 'string' && req.body.username.trim()) {
@@ -99,10 +104,29 @@ export const updateCover = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('-passwordHash')
+      .select('-passwordHash -notificationSettings') // Exclude sensitive settings from public view
       .populate('followers', 'username avatar')
       .populate('following', 'username avatar');
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Increment profile views if viewed by a different user
+    if (req.user && String(req.user.id) !== String(user._id)) {
+      user.profileViews = (user.profileViews || 0) + 1;
+      await user.save();
+    }
+
+    // Privacy check
+    if (user.isPrivate && (!req.user || (String(req.user.id) !== String(user._id) && !user.followers.some(f => String(f._id) === String(req.user.id))))) {
+      return res.json({
+        _id: user._id,
+        username: user.username,
+        avatar: user.avatar,
+        isPrivate: true,
+        followers: user.followers.length,
+        following: user.following.length,
+      });
+    }
+
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -124,6 +148,22 @@ export const followUser = async (req, res) => {
     const upd1 = await User.updateOne({ _id: meId }, { $addToSet: { following: target._id } });
     if (upd1.matchedCount === 0) return res.status(401).json({ message: 'Not authenticated' });
     await User.updateOne({ _id: target._id }, { $addToSet: { followers: meId } });
+
+    // Create notification for the followed user
+    await createNotification({
+      recipient: target._id,
+      sender: meId,
+      type: 'follow',
+      refId: meId // Reference the follower's ID
+    });
+
+    // Log activity for following a user
+    await createActivity({
+      user: meId,
+      type: 'follow',
+      refId: target._id
+    });
+
     res.json({ ok: true });
   } catch (err) {
     if (err?.name === 'CastError') return res.status(400).json({ message: 'Invalid user id' });
@@ -201,6 +241,42 @@ export const getBookmarks = async (req, res) => {
   }
 };
 
+export const updateNotificationSettings = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const { email, push } = req.body;
+    const updateFields = {};
+
+    if (email && typeof email === 'object') {
+      for (const key of ['likes', 'comments', 'follows', 'messages']) {
+        if (typeof email[key] === 'boolean') {
+          updateFields[`notificationSettings.email.${key}`] = email[key];
+        }
+      }
+    }
+
+    if (push && typeof push === 'object') {
+      for (const key of ['likes', 'comments', 'follows', 'messages']) {
+        if (typeof push[key] === 'boolean') {
+          updateFields[`notificationSettings.push.${key}`] = push[key];
+        }
+      }
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: 'No valid notification settings provided' });
+    }
+
+    const user = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true, runValidators: true }).select('notificationSettings');
+    res.json(user.notificationSettings);
+  } catch (err) {
+    console.error('updateNotificationSettings error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Presence heartbeat: update lastActiveAt
 export const heartbeat = async (req, res) => {
   try {
@@ -213,4 +289,22 @@ export const heartbeat = async (req, res) => {
   }
 };
 
+export const getUserSuggestions = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
 
+    const me = await User.findById(userId).select('following');
+    const followingIds = me.following.map(f => f.toString());
+    followingIds.push(userId.toString()); // Exclude self
+
+    const suggestions = await User.find({ _id: { $nin: followingIds } })
+      .select('username avatar firstName surname')
+      .limit(5);
+
+    res.json(suggestions);
+  } catch (err) {
+    console.error('getUserSuggestions error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

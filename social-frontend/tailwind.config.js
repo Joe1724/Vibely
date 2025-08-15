@@ -8,32 +8,36 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#4F46E5', // Indigo 600
-          dark: '#4338CA', // Indigo 700
-          light: '#6366F1', // Indigo 500
+          DEFAULT: '#8B5CF6', // Violet 500
+          dark: '#7C3AED',    // Violet 600
+          light: '#A78BFA',   // Violet 400
         },
         secondary: {
-          DEFAULT: '#10B981', // Emerald 500
-          dark: '#059669', // Emerald 600
-          light: '#34D399', // Emerald 400
+          DEFAULT: '#3B82F6', // Blue 500
+          dark: '#2563EB',    // Blue 600
+          light: '#60A5FA',   // Blue 400
         },
         accent: {
-          DEFAULT: '#F59E0B', // Amber 500
-          dark: '#D97706', // Amber 600
-          light: '#FBBF24', // Amber 400
+          DEFAULT: '#EC4899', // Pink 500
+          dark: '#DB2777',    // Pink 600
+          light: '#F472B6',   // Pink 400
         },
         gray: {
-          50: '#F9FAFB',
-          100: '#F3F4F6',
-          200: '#E5E7EB',
-          300: '#D1D5DB',
-          400: '#9CA3AF',
-          500: '#6B7280',
-          600: '#4B5563',
-          700: '#374151',
-          800: '#1F2937',
-          900: '#111827',
+          50: '#F8FAFC',    // Slate 50
+          100: '#F1F5F9',   // Slate 100
+          200: '#E2E8F0',   // Slate 200
+          300: '#CBD5E1',   // Slate 300
+          400: '#94A3B8',   // Slate 400
+          500: '#64748B',   // Slate 500
+          600: '#475569',   // Slate 600
+          700: '#334155',   // Slate 700
+          800: '#1E293B',   // Slate 800
+          900: '#0F172A',   // Slate 900
         },
+        brand: {
+          bg: '#F3E8FF', // Light purple background
+          'bg-dark': '#1D1B20',
+        }
       },
       spacing: {
         '1/2': '0.125rem',

@@ -2,7 +2,8 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import OtpCode from '../models/OtpCode.js';
-import { sendMail } from '../utils/mailer.js';
+import { sendMail, sendOtpEmail, sendPasswordResetEmail } from '../utils/mailer.js';
+import crypto from 'crypto';
 
 export const register = async (req, res) => {
   try {
@@ -102,12 +103,7 @@ export const registerInit = async (req, res) => {
       });
     }
 
-    await sendMail({
-      to: email,
-      subject: 'Your verification code',
-      text: `Your verification code is ${code}. It expires in ${ttlMinutes} minutes.`,
-      html: `<p>Your verification code is <b>${code}</b>. It expires in ${ttlMinutes} minutes.</p>`,
-    });
+    await sendOtpEmail(email, code);
 
     const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
     const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -204,12 +200,7 @@ export const registerResend = async (req, res) => {
 
     await doc.save();
 
-    await sendMail({
-      to: email,
-      subject: 'Your verification code',
-      text: `Your verification code is ${newCode}. It expires in ${ttlMinutes} minutes.`,
-      html: `<p>Your verification code is <b>${newCode}</b>. It expires in ${ttlMinutes} minutes.</p>`,
-    });
+    await sendOtpEmail(email, newCode);
 
     const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
     const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -264,4 +255,83 @@ export const getMe = async (req, res) => {
   }
 };
 
-export default { register, registerInit, registerVerify, registerResend, login, getMe };
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    // Important: To prevent user enumeration, always return a success-like
+    // response, even if the user doesn't exist.
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenHash = await bcrypt.hash(resetToken, 10);
+
+      const ttlMinutes = 60; // 1 hour
+      const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
+
+      await OtpCode.create({
+        email,
+        purpose: 'reset_password',
+        codeHash: resetTokenHash,
+        expiresAt,
+      });
+
+      // IMPORTANT: The domain and protocol should come from env vars
+      const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+      try {
+        await sendPasswordResetEmail(email, resetLink);
+      } catch (err) {
+        // Log mailer errors but do not expose failure to the client
+        console.error('Failed to send password reset email:', err);
+      }
+    }
+
+    res.json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, token, password, confirmPassword } = req.body;
+
+    if (!email || !token || !password || !confirmPassword) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    const doc = await OtpCode.findOne({ email, purpose: 'reset_password' });
+
+    if (!doc || doc.expiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const match = await bcrypt.compare(token, doc.codeHash);
+    if (!match) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    await User.updateOne({ email }, { $set: { passwordHash } });
+
+    // Invalidate the token after use
+    await OtpCode.deleteOne({ _id: doc._id });
+
+    res.json({ message: 'Password has been reset successfully.' });
+
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export default { register, registerInit, registerVerify, registerResend, login, getMe, forgotPassword, resetPassword };

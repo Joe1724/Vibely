@@ -3,88 +3,35 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', sans-serif; /* Modern font */
+  font-family: 'Inter', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
-  color: theme('colors.gray.800'); /* Use Tailwind color */
-  background-color: theme('colors.gray.50'); /* Use Tailwind color */
-
+  color: theme('colors.gray.700');
+  background-color: theme('colors.brand.bg');
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* General body styles */
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: theme('colors.gray.50'); /* Ensure body background matches root */
-  color: theme('colors.gray.800'); /* Ensure body text color matches root */
-}
-
-/* Link styles */
-a {
-  font-weight: 500;
-  color: theme('colors.primary.DEFAULT'); /* Use primary color for links */
-  text-decoration: none; /* Remove underline */
-  transition: color 0.2s ease-in-out; /* Smooth transition */
-}
-a:hover {
-  color: theme('colors.primary.dark'); /* Darker primary on hover */
-}
-
-/* Heading styles */
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  color: theme('colors.gray.900'); /* Darker color for headings */
-}
-
-/* Button styles - will be mostly handled by Tailwind classes directly in components */
-button {
-  border-radius: theme('borderRadius.md'); /* Use Tailwind border-radius */
-  border: 1px solid transparent;
-  padding: theme('spacing.2') theme('spacing.4'); /* Use Tailwind spacing */
-  font-size: theme('fontSize.base'); /* Use Tailwind font size */
-  font-weight: theme('fontWeight.medium'); /* Use Tailwind font weight */
-  font-family: inherit;
-  background-color: theme('colors.gray.200'); /* Default button background */
-  color: theme('colors.gray.800'); /* Default button text color */
-  cursor: pointer;
-  transition: all 0.2s ease-in-out; /* Smooth transition for all properties */
-}
-button:hover {
-  border-color: theme('colors.primary.DEFAULT'); /* Primary color border on hover */
-  background-color: theme('colors.gray.300'); /* Slightly darker background on hover */
-}
-button:focus,
-button:focus-visible {
-  outline: 2px solid theme('colors.primary.DEFAULT'); /* Primary color outline on focus */
-  outline-offset: 2px;
+  background-color: theme('colors.brand.bg');
+  color: theme('colors.gray.700');
 }
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   :root {
-    color: theme('colors.gray.100');
-    background-color: theme('colors.gray.900');
+    color: theme('colors.gray.300');
+    background-color: theme('colors.brand.bg-dark');
   }
+
   body {
-    background-color: theme('colors.gray.900');
-    color: theme('colors.gray.100');
-  }
-  a:hover {
-    color: theme('colors.primary.light');
-  }
-  button {
-    background-color: theme('colors.gray.700');
-    color: theme('colors.gray.100');
-  }
-  button:hover {
-    background-color: theme('colors.gray.600');
+    background-color: theme('colors.brand.bg-dark');
+    color: theme('colors.gray.300');
   }
 }

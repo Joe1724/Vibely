@@ -11,6 +11,10 @@ import postRoutes from './routes/postRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import devRoutes from './routes/devRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import trendingRoutes from './routes/trendingRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -37,6 +41,10 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dev', devRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/trending', trendingRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global error handler (catches multer and other errors)
 // eslint-disable-next-line no-unused-vars

@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-const authMiddleware = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token = req.header("Authorization");
 
   if (!token || !token.startsWith("Bearer ")) {
@@ -18,4 +18,11 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-export default authMiddleware;
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "User role not authorized" });
+    }
+    next();
+  };
+};

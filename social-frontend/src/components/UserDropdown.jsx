@@ -72,10 +72,28 @@ function UserDropdown() {
               View Profile
             </button>
             <button
+              onClick={() => {
+                navigate('/settings/notifications');
+                setIsOpen(false);
+              }}
+              className="block w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Notification Settings
+            </button>
+            <button
               onClick={toggle}
               className="block w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               {theme === 'dark' ? 'Light' : 'Dark'} Mode
+            </button>
+            <button
+              onClick={() => {
+                navigate('/activity');
+                setIsOpen(false);
+              }}
+              className="block w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Activity Timeline
             </button>
             <hr className="my-1 border-gray-200 dark:border-gray-700" />
             <button
